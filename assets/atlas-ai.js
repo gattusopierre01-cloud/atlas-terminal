@@ -1,7 +1,7 @@
 /* Atlas — the assistant layer. BYOK: the API key lives ONLY in this browser's
    localStorage, never in the repo. Visitors without a key see a dormant state. */
 (() => {
-  const LS_KEY = "atlas.apikey", LS_MODEL = "atlas.model", LS_VOICE = "atlas.voiceout";
+  const LS_KEY = "atlas.apikey", LS_MODEL = "atlas.model", LS_VOICE = "atlas.voiceout", LS_VNAME = "atlas.voicename";
   const MODELS = [["claude-haiku-4-5", "Haiku — fast & cheap"], ["claude-sonnet-4-6", "Sonnet — smartest"]];
   const $ = id => document.getElementById(id);
   const getKey = () => { try { return localStorage.getItem(LS_KEY) || ""; } catch { return ""; } };
@@ -18,7 +18,7 @@
     return JSON.stringify({ ...nav, ...ctx }).slice(0, 14000);
   }
   const SYSTEM = () => `You are Atlas, the built-in assistant of Atlas Terminal — an open macro & equity dashboard (globe with country data, markets page, ~650-stock screener with Opportunity Scores, Portfolio Lab with backtests/VaR/Monte Carlo, Morning Brief).
-Style: concise, precise, lightly wry; a calm operations voice. Use short paragraphs, no headers, minimal lists. Numbers matter — cite them from CONTEXT when relevant. If CONTEXT lacks the answer, say so plainly rather than inventing figures.
+Style: JARVIS-like — a calm, dryly witty operations voice. BE BRIEF: default to 1–3 tight sentences; never exceed ~60 words unless the user explicitly asks for detail or analysis. No headers, no lists, no filler, no restating the question. Numbers matter — cite them from CONTEXT when relevant. If CONTEXT lacks the answer, say so in one sentence rather than inventing figures.
 You are not a financial advisor; frame everything as analysis of screening signals, never as advice to buy or sell.
 You can trigger site actions. If (and only if) the user's request maps to one, end your reply with a new line exactly like:
 ACTION:{"goto":"company.html?t=ASML.AS"}
@@ -29,7 +29,7 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
   async function ask(text, onDelta) {
     history.push({ role: "user", content: text });
     const body = {
-      model: getModel(), max_tokens: 700, stream: true,
+      model: getModel(), max_tokens: 350, stream: true,
       system: SYSTEM(),
       messages: history.slice(-12),
     };
@@ -96,17 +96,26 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
     recog.onend = () => onState("idle");
     recog.start();
   }
+  function pickVoice() {
+    const vs = speechSynthesis.getVoices();
+    const saved = (() => { try { return localStorage.getItem(LS_VNAME) || ""; } catch { return ""; } })();
+    if (saved) { const v = vs.find(x => x.name === saved); if (v) return v; }
+    // ranked preference: the most JARVIS-adjacent voices commonly available
+    const prefs = ["Daniel (English (United Kingdom))", "Daniel", "Google UK English Male",
+      "Microsoft Ryan Online (Natural) - English (United Kingdom)", "Arthur", "Oliver"];
+    for (const p of prefs) { const v = vs.find(x => x.name === p || x.name.startsWith(p)); if (v) return v; }
+    return vs.find(x => /en-GB/i.test(x.lang)) || vs.find(x => /en/i.test(x.lang)) || null;
+  }
   function speak(text) {
     if (!voiceOut() || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const clean = text.replace(/[*_#`]/g, "").replace(/ACTION:.*/s, "");
     const u = new SpeechSynthesisUtterance(clean.slice(0, 600));
-    u.rate = 1.04; u.pitch = 0.92;
-    const vs = speechSynthesis.getVoices();
-    const v = vs.find(x => /en-GB/i.test(x.lang)) || vs.find(x => /en/i.test(x.lang));
-    if (v) u.voice = v;
+    u.rate = 1.0; u.pitch = 0.84; u.volume = 1;
+    const v = pickVoice(); if (v) u.voice = v;
     speechSynthesis.speak(u);
   }
+  if (window.speechSynthesis) speechSynthesis.onvoiceschanged = () => {};
 
   // ---------- UI ----------
   function buildUI() {
@@ -134,6 +143,7 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
         <div class="small" style="margin-bottom:8px"><b>Bring your own key.</b> Your Anthropic API key is stored only in this browser (localStorage) and sent only to api.anthropic.com. It is never uploaded to the site's repository — visitors to this site cannot see or use it. Get one at console.anthropic.com.</div>
         <input id="ac-key" type="password" placeholder="sk-ant-…" autocomplete="off">
         <select id="ac-model">${MODELS.map(m => `<option value="${m[0]}">${m[1]}</option>`).join("")}</select>
+        <select id="ac-voicesel"><option value="">Voice: auto (best available)</option></select>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn" id="ac-save" style="padding:7px 16px;font-size:13px">Save</button>
           <button class="btn ghost" id="ac-clearkey" style="padding:7px 16px;font-size:13px">Remove key</button>
@@ -147,7 +157,23 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
     document.body.appendChild(p);
 
     $("ac-x").onclick = () => p.hidden = true;
-    $("ac-gear").onclick = () => { const s = $("ac-settings"); s.hidden = !s.hidden; $("ac-key").value = getKey(); $("ac-model").value = getModel(); };
+    $("ac-gear").onclick = () => {
+      const s = $("ac-settings"); s.hidden = !s.hidden;
+      $("ac-key").value = getKey(); $("ac-model").value = getModel();
+      const sel = $("ac-voicesel");
+      const fill = () => {
+        const vs = (speechSynthesis && speechSynthesis.getVoices() || []).filter(v => /^en/i.test(v.lang));
+        const saved = (() => { try { return localStorage.getItem(LS_VNAME) || ""; } catch { return ""; } })();
+        sel.innerHTML = '<option value="">Voice: auto (best available)</option>' +
+          vs.map(v => `<option value="${v.name}" ${v.name === saved ? "selected" : ""}>${v.name} (${v.lang})</option>`).join("");
+      };
+      fill(); if (window.speechSynthesis) speechSynthesis.onvoiceschanged = fill;
+      sel.onchange = () => {
+        try { localStorage.setItem(LS_VNAME, sel.value); } catch {}
+        const u = new SpeechSynthesisUtterance("Atlas online.");
+        u.pitch = .84; const v = pickVoice(); if (v) u.voice = v; speechSynthesis.speak(u);
+      };
+    };
     $("ac-save").onclick = () => {
       try { localStorage.setItem(LS_KEY, $("ac-key").value.trim()); localStorage.setItem(LS_MODEL, $("ac-model").value); } catch {}
       $("ac-settings").hidden = true; sysMsg(getKey() ? "Key saved. Atlas is awake." : "No key entered.");
