@@ -80,6 +80,7 @@ const MP = (() => {
       <div class="links">
         <a href="index.html" ${active === "globe" ? 'class="active"' : ""}>Globe</a>
         <a href="markets.html" ${active === "markets" ? 'class="active"' : ""}>Markets</a>
+        <a href="lab.html" ${active === "lab" ? 'class="active"' : ""}>Lab</a>
         <a href="screener.html" ${active === "screener" ? 'class="active"' : ""}>Screener</a>
         <a href="methodology.html" ${active === "method" ? 'class="active"' : ""}>Methodology</a>
       </div>

@@ -103,13 +103,35 @@
       }).join("");
     }
 
-    // news via GDELT
+    // news via GDELT — adjacency-phrased query + title filter so "articles that
+    // merely mention the country" don't crowd out articles ABOUT the country
     const newsEl = body.querySelector("#news");
-    const q = encodeURIComponent(`"${name}" (economy OR inflation OR "central bank" OR GDP)`);
-    const g = await MP.getJSONx(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q}%20sourcelang:eng&mode=ArtList&format=json&maxrecords=7&sort=DateDesc`);
-    const arts = g && g.articles ? g.articles.filter(a => a.title) : [];
-    newsEl.innerHTML = arts.length
-      ? arts.map(a => `<div class="news-item"><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a><div class="src">${a.domain} · ${(a.seendate || "").slice(0, 8).replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")}</div></div>`).join("")
+    const ALIAS = { "United States of America": ["United States", "US ", "U.S.", "America"],
+      "United Kingdom": ["UK", "Britain", "British", "United Kingdom"],
+      "Russia": ["Russia", "Russian"], "China": ["China", "Chinese"],
+      "Netherlands": ["Netherlands", "Dutch"], "Switzerland": ["Switzerland", "Swiss"],
+      "Czechia": ["Czech"], "South Korea": ["Korea"], "United Arab Emirates": ["UAE", "Emirates"] };
+    const keys = ALIAS[name] || [name];
+    const kMain = keys[0];
+    const q1 = encodeURIComponent(`("${kMain} economy" OR "${kMain} inflation" OR "${kMain} GDP" OR "${kMain} economic" OR "${kMain} central bank")`);
+    let g = await MP.getJSONx(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q1}%20sourcelang:eng&mode=ArtList&format=json&maxrecords=16&sort=DateDesc`);
+    let arts = g && g.articles ? g.articles.filter(a => a.title) : [];
+    const aboutCountry = a => keys.some(k => a.title.toLowerCase().includes(k.toLowerCase().trim()));
+    let filtered = arts.filter(aboutCountry);
+    if (filtered.length < 2) {
+      // broader retry: plain mention query, still title-filtered
+      const q2 = encodeURIComponent(`"${kMain}" (economy OR inflation OR "central bank" OR GDP OR markets)`);
+      g = await MP.getJSONx(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q2}%20sourcelang:eng&mode=ArtList&format=json&maxrecords=20&sort=DateDesc`);
+      arts = g && g.articles ? g.articles.filter(a => a.title) : [];
+      filtered = arts.filter(aboutCountry);
+      if (filtered.length < 2) filtered = arts.slice(0, 6); // last resort: show mentions, labelled
+    }
+    const strict = filtered.length && filtered.every(aboutCountry);
+    const seen = new Set();
+    filtered = filtered.filter(a => !seen.has(a.title) && seen.add(a.title)).slice(0, 7);
+    newsEl.innerHTML = filtered.length
+      ? (strict ? "" : `<div class="small" style="margin-bottom:6px">Few direct headlines — showing recent articles mentioning ${kMain}:</div>`) +
+        filtered.map(a => `<div class="news-item"><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a><div class="src">${a.domain} · ${(a.seendate || "").slice(0, 8).replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")}</div></div>`).join("")
       : `<div class="small">No recent English-language economic headlines found for ${name}.</div>`;
   }
 

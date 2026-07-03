@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<title>Portfolio Lab — Atlas Terminal</title>
+<style>
+/* Lab-specific */
+.holding { display:grid; grid-template-columns: 1fr 150px 64px 30px; gap:12px; align-items:center;
+  padding:10px 0; border-bottom:1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+.holding .nm { min-width:0 } .holding .nm .co { display:block; font-size:11.5px; color:var(--muted);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.holding input[type=range]{ width:100%; accent-color: var(--blue); }
+.holding .w { font-family:var(--font-mono); text-align:right }
+.holding .rm { background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;
+  width:26px;height:26px;cursor:pointer } .holding .rm:hover{ color:var(--down);border-color:var(--down) }
+.addbox { position:relative }
+.addbox .sugg { position:absolute; top:100%; left:0; right:0; z-index:20; background:var(--panel-2);
+  border:1px solid var(--line); border-radius:8px; max-height:260px; overflow-y:auto }
+.addbox .sugg div { padding:8px 12px; cursor:pointer; font-size:13px }
+.addbox .sugg div:hover { background:var(--panel) }
+.btn { background:var(--blue); color:#fff; border:none; border-radius:8px; padding:10px 22px;
+  font-family:var(--font-body); font-weight:600; font-size:14px; cursor:pointer }
+.btn:hover{ background:var(--blue-bright) } .btn.ghost{ background:transparent;border:1px solid var(--line);color:var(--muted) }
+.btn.ghost:hover{ color:var(--ink);border-color:var(--blue) }
+.metric { padding:14px 16px }
+.metric .v{ font-size:22px } .metric .read { font-size:12px; color:var(--muted); margin-top:6px; line-height:1.45 }
+.rpt-head { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px;
+  border-bottom:1px solid var(--line); padding-bottom:10px; margin:40px 0 4px }
+.rpt-head h2 { font-family:var(--font-display); font-weight:400; font-size:26px; margin:0 }
+.rpt-head .no { font-family:var(--font-mono); font-size:11px; color:var(--faint); letter-spacing:.12em }
+.cmx { border-collapse:collapse; font-family:var(--font-mono); font-size:11.5px }
+.cmx td,.cmx th{ padding:6px 8px; text-align:center; border:1px solid var(--bg) }
+.cmx th{ color:var(--muted); font-weight:400 }
+.legend { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin:6px 0 }
+.legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px }
+@media print {
+  .nav,.tape,.controls-zone,footer.site,.btn { display:none !important }
+  body{ background:#fff; color:#111 } .card{ border-color:#ddd; background:#fff }
+}
+</style>
+</head>
+<body>
+<main class="wrap" style="max-width:1150px">
+  <div class="eyebrow">Portfolio Lab</div>
+  <h1 class="display">Build it. <em>Stress it.</em></h1>
+  <p class="lede">Assemble a portfolio from the Atlas Terminal universe and get an institutional-style risk report: backtest, CAPM, correlation, efficient frontier, VaR/CVaR and a 10,000-path Monte Carlo simulation — computed entirely in your browser.</p>
+  <div id="banner"></div>
+
+  <div class="controls-zone">
+    <div class="grid g2" style="margin-top:22px; align-items:start">
+      <div class="card">
+        <div class="k" style="margin-bottom:10px">Holdings <span class="small" id="wsum"></span></div>
+        <div class="addbox">
+          <input type="search" id="add" placeholder="Add a ticker or company… (e.g. ASML)" style="width:100%">
+          <div class="sugg" id="sugg" hidden></div>
+        </div>
+        <div id="holdings" style="margin-top:6px"></div>
+        <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
+          <button class="btn ghost" id="eq">Equal weight</button>
+          <button class="btn ghost" id="iv">Inverse volatility</button>
+          <button class="btn ghost" id="clear">Clear</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="k" style="margin-bottom:10px">Settings</div>
+        <div class="grid g2" style="gap:10px">
+          <label class="small">Base currency<br><select id="ccy" style="width:100%"><option>USD</option><option>EUR</option><option>GBP</option></select></label>
+          <label class="small">Benchmark<br><select id="bench" style="width:100%">
+            <option value="^GSPC">S&amp;P 500</option><option value="^NDX">Nasdaq 100</option>
+            <option value="^FTSE">FTSE 100</option><option value="^STOXX50E">Euro Stoxx 50</option></select></label>
+          <label class="small">Lookback<br><select id="lb" style="width:100%"><option value="260">5 years</option><option value="156">3 years</option><option value="52">1 year</option></select></label>
+          <label class="small">Rebalancing<br><select id="reb" style="width:100%"><option value="0">Buy &amp; hold</option><option value="4">Monthly rebalance</option><option value="13">Quarterly rebalance</option></select></label>
+          <label class="small">Initial capital<br><input type="search" id="cap" value="10000" style="width:100%; min-width:0"></label>
+          <label class="small">Risk-free rate %/yr<br><input type="search" id="rf" style="width:100%; min-width:0"></label>
+        </div>
+        <div style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+          <button class="btn" id="run">Run analysis</button>
+          <button class="btn ghost" id="share">Copy share link</button>
+          <button class="btn ghost" onclick="window.print()">Print / PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="report" style="display:none">
+    <div class="rpt-head"><h2>Performance</h2><span class="no">01 · BACKTEST</span></div>
+    <p class="small" id="perf-sub"></p>
+    <div class="card"><div id="growth"></div><div class="legend" id="growth-legend"></div></div>
+    <div class="grid g4" id="perf-metrics" style="margin-top:14px"></div>
+
+    <div class="rpt-head"><h2>Risk</h2><span class="no">02 · DISTRIBUTION &amp; TAILS</span></div>
+    <div class="grid g4" id="risk-metrics"></div>
+
+    <div class="rpt-head"><h2>Market model</h2><span class="no">03 · CAPM</span></div>
+    <div class="grid g4" id="capm-metrics"></div>
+
+    <div class="rpt-head"><h2>Diversification</h2><span class="no">04 · CORRELATION</span></div>
+    <div class="grid g2" style="align-items:start">
+      <div class="card" style="overflow-x:auto"><div class="k" style="margin-bottom:8px">Correlation matrix (weekly returns)</div><div id="cmx"></div></div>
+      <div class="grid g2" id="div-metrics" style="gap:14px"></div>
+    </div>
+
+    <div class="rpt-head"><h2>Efficient frontier</h2><span class="no">05 · MEAN–VARIANCE</span></div>
+    <div class="card"><div id="frontier"></div><div class="legend"><span><i style="background:#26406b"></i>Random portfolios (4,000)</span><span><i style="background:#e8b44c"></i>Your portfolio</span><span><i style="background:#2fbf71"></i>Max Sharpe</span><span><i style="background:#4f8dfd"></i>Min volatility</span></div><p class="small" id="frontier-note"></p></div>
+
+    <div class="rpt-head"><h2>Monte Carlo</h2><span class="no">06 · 10,000 BOOTSTRAP PATHS · 1 YEAR</span></div>
+    <div class="card"><div id="fan"></div><div class="legend"><span><i style="background:#2563eb"></i>Median path</span><span><i style="background:#26406b"></i>25–75th percentile</span><span><i style="background:#16273f"></i>5–95th percentile</span></div></div>
+    <div class="grid g4" id="mc-metrics" style="margin-top:14px"></div>
+
+    <div class="banner" style="margin-top:34px"><b>Read this before believing the numbers.</b> Backtests use today's index members only (survivorship bias flatters results). Weekly data means strategic, not trading-desk, precision. Monte Carlo resamples history — it cannot imagine crises history hasn't shown it. Correlations rise when markets fall. Nothing here is investment advice; it is a quantitative teaching and screening instrument.</div>
+  </div>
+
+  <div id="empty" class="card" style="margin-top:26px"><div class="k">No analysis yet</div><p class="small" style="margin-top:6px">Add 2–15 holdings, set weights, and press <b>Run analysis</b>. Try a starter: <a href="#" id="demo">Global quality six-pack →</a></p></div>
+</main>
+<script src="assets/app.js"></script>
+<script src="assets/lab.js"></script>
+</body>
+</html>

@@ -331,7 +331,7 @@ def main():
         log(f"WARNING: universe only has {len(universe)} names — Wikipedia layout may have changed")
     tickers = [u["ticker"] for u in universe]
 
-    closes = download_prices(tickers)
+    closes = download_prices(tickers, period="5y")
     log(f"prices ok for {len(closes)}/{len(tickers)}")
     if not closes:
         raise SystemExit("FATAL: no prices downloaded from Yahoo Finance — "
@@ -352,6 +352,55 @@ def main():
         weekly = closes[t].resample("W").last().dropna().tail(52)
         prices_out[t] = [round(float(x), 2) for x in weekly.tolist()]
         time.sleep(0.15)
+
+    # ---- Portfolio Lab dataset: 5y weekly, aligned grid, native ccy + FX
+    def detect_ccy(row):
+        c = str(row.get("currency", "")).upper()
+        if c == "GBP" and not str(row["ticker"]).endswith(".L"):
+            return "GBP"
+        if str(row["ticker"]).endswith(".L"):
+            return "GBP"  # .L quotes arrive in pence; divided by 100 below
+        if c in ("USD", "EUR", "GBP"):
+            return c
+        return "EUR" if "." in str(row["ticker"]) else "USD"
+
+    fx_closes = download_prices(["GBPUSD=X", "EURUSD=X", "^IRX"], period="5y")
+    bench_syms = {"^GSPC": "USD", "^NDX": "USD", "^FTSE": "GBP", "^STOXX50E": "EUR"}
+    bench_closes = download_prices(list(bench_syms), period="5y")
+    grid_src = bench_closes.get("^GSPC")
+    if grid_src is None or "GBPUSD=X" not in fx_closes or "EURUSD=X" not in fx_closes:
+        log("WARNING: lab dataset skipped (FX or benchmark download failed)")
+    else:
+        grid = grid_src.resample("W").last().dropna().tail(262).index
+        def on_grid(series, div100=False):
+            w = series.resample("W").last().reindex(grid)
+            vals = []
+            for x in w.tolist():
+                if pd.isna(x):
+                    vals.append(None)
+                else:
+                    vals.append(round(float(x) / (100 if div100 else 1), 4))
+            return vals
+        lab = {
+            "dates": [d.strftime("%Y-%m-%d") for d in grid],
+            "fx": {"GBP": on_grid(fx_closes["GBPUSD=X"]),
+                   "EUR": on_grid(fx_closes["EURUSD=X"])},
+            "rf": (round(float(fx_closes["^IRX"].dropna().iloc[-1]), 2)
+                   if "^IRX" in fx_closes and len(fx_closes["^IRX"].dropna()) else 4.0),
+            "benchmarks": {}, "series": {}
+        }
+        for sym, ccy in bench_syms.items():
+            if sym in bench_closes:
+                lab["benchmarks"][sym] = {"ccy": ccy, "p": on_grid(bench_closes[sym])}
+        row_by_t = {r["ticker"]: r for r in rows}
+        for t in closes:
+            if t not in row_by_t:
+                continue
+            ccy = detect_ccy(row_by_t[t])
+            # Yahoo quotes .L tickers in pence (GBp) — convert to pounds
+            lab["series"][t] = {"ccy": ccy, "p": on_grid(closes[t], div100=t.endswith(".L"))}
+        (DATA / "prices5y.json").write_text(json.dumps(lab, separators=(",", ":")))
+        log(f"prices5y.json written ({len(lab['series'])} series, {len(grid)} weeks)")
 
     df = pd.DataFrame(rows)
     for col in ("fpe", "pe", "ev_ebitda", "pb", "roe", "op_margin", "gross_margin",
