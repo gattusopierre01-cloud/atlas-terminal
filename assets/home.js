@@ -152,6 +152,9 @@
   $("ledinner").innerHTML = led + led;
   const plainTape = document.querySelector(".tape"); if (plainTape) plainTape.style.display = "none";
 
+  window.AtlasContext = { view: "home landing", marketState: st0.label,
+    indices: ((markets && markets.indices) || []).map(i => ({ n: i.name, last: i.last, d1: i.r1d, y1: i.r1y })) };
+
   // ---------- below the fold ----------
   const scr = await MP.getJSON("data/screener.json");
   if (markets && markets.gainers) {

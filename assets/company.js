@@ -85,6 +85,13 @@
     <div id="news"><div class="skeleton">Loading headlines…</div></div>
   `;
 
+  window.AtlasContext = { view: "company page", company: name, ticker: r.ticker,
+    metrics: { score: r.score, pillars: { val: r.score_val, qual: r.score_qual, mom: r.score_mom, gr: r.score_gr },
+      fpe: r.fpe, pe: r.pe, ev_ebitda: r.ev_ebitda, pb: r.pb, roe: r.roe, op_margin: r.op_margin,
+      rev_growth: r.rev_growth, eps_growth: r.eps_growth, de: r.de, div_yield: r.div_yield,
+      rsi: r.rsi, r1d: r.r1d, r6m: r.r6m, r1y: r.r1y, from_high: r.from_high, mcap: r.mcap, beta: r.beta },
+    reasons: r.reasons, sector: r.sector, region: r.region };
+
   MP.lineChart(document.getElementById("chart"), (prices || {})[t] || []);
 
   const q = encodeURIComponent(`"${(name || t).replace(/"/g, "")}"`);

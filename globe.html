@@ -4,64 +4,38 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Globe — Atlas Terminal</title>
-<meta name="description" content="An open macro & equity terminal: interactive globe, markets, opportunity scores and a full portfolio risk lab.">
+<meta name="description" content="Interactive macroeconomic globe: click any country for growth, inflation, policy rates and live economic news.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<section class="scene" id="scene">
-  <div class="photo" id="photo"></div>
-  <div class="scrim"></div>
-  <svg class="stars" id="stars" aria-hidden="true"></svg>
-
-  <div class="moon-wrap" id="moon" title="Open the globe"></div>
-  <div class="moon-hint">the world · drag me · click to open</div>
-
-  <div class="scene-copy">
-    <div class="eyebrow">Atlas Terminal</div>
-    <h1 class="display">The market has a skyline.<br><em>Tonight it's live.</em></h1>
-    <p class="lede">Each tower below is an index — hover them. The moon is the world — click it. Or press <span class="mono" style="font-size:13px">⌘K</span> and ask for anything.</p>
+<div class="hero-globe">
+  <div id="globe"></div>
+  <div class="hero-copy">
+    <div class="eyebrow">Country intelligence</div>
+    <h1 class="display">The world,<br><em>one sphere.</em></h1>
+    <p class="lede" style="font-size:15px">Click any country for growth, inflation, unemployment, its central bank's policy rate and the latest economic headlines — live from World Bank and GDELT data.</p>
+  </div>
+  <div class="hero-hint"><span class="dot"></span>Drag to rotate · click a country to open its briefing</div>
+  <div class="heat-chips" id="heatchips">
+    <span class="small" style="margin-right:2px">Color by</span>
+    <button data-h="" class="on">None</button>
+    <button data-h="inflation">Inflation</button>
+    <button data-h="gdp">GDP growth</button>
+    <button data-h="rate">Policy rate</button>
+    <span class="heat-legend" id="heatlegend" hidden></span>
   </div>
 
-  <div class="scene-status" id="clock"></div>
-
-  <svg class="sky-layer" id="back-sky" aria-hidden="true"></svg>
-  <svg class="sky-layer" id="front-sky" aria-hidden="true"></svg>
-  <div class="tip" id="tip"></div>
-  <div class="fold">scroll ↓</div>
-</section>
-
-<main class="wrap">
-  <div class="grid g3">
-    <div class="card reveal" id="movers-card">
-      <div class="k" style="margin-bottom:8px">Today's movers</div><div id="home-movers" class="skeleton">Loading…</div>
-      <a class="small" href="markets.html">Full markets →</a>
-    </div>
-    <div class="card reveal" id="tops-card" style="transition-delay:.12s">
-      <div class="k" style="margin-bottom:8px">Highest opportunity scores</div><div id="home-tops" class="skeleton">Loading…</div>
-      <a class="small" href="screener.html">Open the screener →</a>
-    </div>
-    <div class="card reveal" style="transition-delay:.24s">
-      <div class="k" style="margin-bottom:8px">This morning</div><div id="home-brief" class="skeleton">Loading…</div>
-      <a class="small" href="brief.html">Read the Brief →</a>
-    </div>
-  </div>
-
-  <div class="grid g2" style="margin-top:18px">
-    <div class="card reveal link" onclick="location.href='lab.html'">
-      <div class="k">Portfolio Lab</div>
-      <p class="small" style="margin:6px 0 2px">Build a portfolio, then stress it: backtest, CAPM, correlation, efficient frontier, VaR/CVaR and 10,000 Monte Carlo paths — or start from a model portfolio generated from tonight's scores.</p>
-    </div>
-    <div class="card reveal link" style="transition-delay:.12s" onclick="location.href='globe.html'">
-      <div class="k">Country briefings</div>
-      <p class="small" style="margin:6px 0 2px">A clickable planet: growth, inflation, unemployment, policy rates and live economic headlines for every country, straight from World Bank and GDELT data.</p>
-    </div>
-  </div>
-</main>
+  <aside class="country-panel" id="panel" aria-live="polite">
+    <button class="close" id="panel-close" aria-label="Close panel">✕</button>
+    <div id="panel-body"></div>
+  </aside>
+</div>
 
 <script src="https://unpkg.com/globe.gl@2.32.2/dist/globe.gl.min.js"></script>
 <script src="assets/app.js"></script>
-<script src="assets/home.js"></script>
+<script src="assets/atlas-ai.js"></script>
+<script src="assets/globe.js"></script>
 </body>
 </html>

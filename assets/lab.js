@@ -305,6 +305,13 @@
     }));
   }
 
+  // deep link: lab.html?model=Name (used by Atlas actions)
+  const wantModel = new URLSearchParams(location.search).get("model") || window.AtlasLoadModel;
+  if (wantModel && MODELS.length) {
+    const mi = MODELS.findIndex(m => m.name.toLowerCase() === wantModel.toLowerCase());
+    if (mi >= 0) setTimeout(() => { H = MODELS[mi].port.map(h => ({ ...h })); renderHoldings(); run(); }, 300);
+  }
+
   // ---------- the report ----------
   function metric(label, value, read) {
     return `<div class="card metric"><div class="k">${label}</div><div class="v">${value}</div><div class="read">${read}</div></div>`;
@@ -495,6 +502,16 @@
       metric("Probability of loss", (probLoss * 100).toFixed(0) + "%", "Share of simulated years ending below your starting capital.") +
       metric("1-year VaR 95% (MC)", mcVar > 0 ? fmtM(mcVar) : "None", mcVar > 0 ? `In the worst 5% of simulated years you lose at least this much of ${fmtM(cap)}.` : "Even the 5th-percentile simulated year ended in profit — a sign this lookback window was unusually kind. Trust it accordingly.") +
       metric("1-year CVaR 95% (MC)", mcCvar > 0 ? fmtM(mcCvar) : "None", mcCvar > 0 ? "Average loss across those worst simulated years — budget for this, hope to never need it." : "The average of the worst simulated years was still a gain; history rarely stays this generous.");
+
+    window.AtlasContext = { view: "portfolio lab report",
+      holdings: W.tickers.map((t, i) => ({ t, w: +(wNorm[i] * 100).toFixed(1) })),
+      base, lookbackWeeks: lb, rebalance: reb,
+      metrics: { cagrPct: +(cagr * 100).toFixed(2), volPct: +(vol * 100).toFixed(2), sharpe: +sharpe.toFixed(2),
+        sortino: isNaN(sortino) ? null : +sortino.toFixed(2), maxDrawdownPct: +(dd.maxDD * 100).toFixed(2),
+        var95wPct: +(var95 * 100).toFixed(2), cvar95wPct: +(cvar95 * 100).toFixed(2),
+        beta: capm ? +capm.beta.toFixed(2) : null, alphaAnnPct: capm ? +(capm.alphaAnn * 100).toFixed(2) : null,
+        avgPairCorr: +avgCorr.toFixed(2), divRatio: +divRatio.toFixed(2),
+        mcMedian1y: Math.round(med[HOR]), mcProbLossPct: +(probLoss * 100).toFixed(1) } };
 
     // update URL for sharing
     const enc = H.map(h => `${h.t}:${h.w.toFixed(0)}`).join(",");

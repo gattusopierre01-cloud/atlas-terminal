@@ -170,7 +170,10 @@ const MP = (() => {
       ctys = palGeo.filter(n => n.toLowerCase().includes(q)).slice(0, 4)
         .map(n => `<a href="globe.html?focus=${encodeURIComponent(n)}"><span class="pal-k">country</span>${n}</a>`);
     }
-    res.innerHTML = [...ticks, ...ctys, ...pages.slice(0, q ? 3 : 7)].join("") || `<div class="pal-none">No matches.</div>`;
+    const askRow = q.length > 2 ? [`<a href="#" data-ask="1"><span class="pal-k" style="background:var(--blue);color:#fff;border-color:var(--blue)">atlas</span>Ask Atlas: “${q}”</a>`] : [];
+    res.innerHTML = [...ticks, ...ctys, ...pages.slice(0, q ? 3 : 7), ...askRow].join("") || `<div class="pal-none">No matches.</div>`;
+    const ar = res.querySelector("a[data-ask]");
+    if (ar) ar.addEventListener("click", e => { e.preventDefault(); closePalette(); if (window.Atlas) window.Atlas.openChat(q); });
   }
   document.addEventListener("keydown", e => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(); }

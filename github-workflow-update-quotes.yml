@@ -1,0 +1,35 @@
+name: Intraday quotes
+
+on:
+  schedule:
+    # every 30 min, 13:00-21:00 UTC, Mon-Fri (covers NYSE hours incl. DST drift)
+    - cron: "*/30 13-21 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: quotes
+  cancel-in-progress: true
+
+jobs:
+  quotes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install yfinance pandas
+      - name: Refresh quotes
+        run: python scripts/quick_quotes.py
+      - name: Commit
+        run: |
+          git config user.name "atlas-bot"
+          git config user.email "actions@github.com"
+          git add data/markets.json data/meta.json
+          git diff --cached --quiet || git commit -m "Quotes $(date -u +'%H:%M UTC')"
+          git pull --rebase && git push

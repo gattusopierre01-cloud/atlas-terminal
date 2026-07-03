@@ -36,8 +36,8 @@
     .polygonLabel(f => `<div style="font-family:'IBM Plex Mono',monospace;font-size:12px;background:#0f1b2e;border:1px solid #1e3252;border-radius:6px;padding:5px 9px;color:#e9eef6">${f.properties.ADMIN}</div>`)
     .onPolygonHover(f => {
       el.style.cursor = f ? "pointer" : "grab";
-      globe.polygonCapColor(p => p === f ? "rgba(79,141,253,0.35)" : "rgba(37,99,235,0.06)")
-           .polygonAltitude(p => p === f ? 0.02 : 0.006);
+      if (!heatOn) globe.polygonCapColor(p => p === f ? "rgba(79,141,253,0.35)" : "rgba(37,99,235,0.06)");
+      globe.polygonAltitude(p => p === f ? 0.02 : 0.006);
     })
     .onPolygonClick(f => openCountry(f.properties));
 
@@ -47,6 +47,58 @@
   const size = () => { globe.width(el.clientWidth); globe.height(el.clientHeight); };
   size(); window.addEventListener("resize", size);
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) globe.controls().autoRotate = false;
+
+  // ---------- heatmap (World Bank choropleth + policy rates) ----------
+  const HEATCFG = {
+    inflation: { code: "FP.CPI.TOTL.ZG", label: "CPI inflation %", stops: [0, 2, 4, 7, 12], colors: ["#2fbf71", "#9bd06a", "#e8b44c", "#e07b3f", "#e5484d"] },
+    gdp: { code: "NY.GDP.MKTP.KD.ZG", label: "Real GDP growth %", stops: [-2, 0, 2, 4, 6], colors: ["#e5484d", "#e07b3f", "#e8b44c", "#9bd06a", "#2fbf71"] },
+    rate: { label: "Policy rate %", stops: [0, 1, 2.5, 4, 6], colors: ["#2fbf71", "#9bd06a", "#e8b44c", "#e07b3f", "#e5484d"] },
+  };
+  const heatVals = {};
+  let heatOn = "";
+  function heatColor(cfg, v) {
+    if (v == null) return "rgba(37,99,235,0.06)";
+    let i = cfg.stops.findIndex(s => v < s); if (i === -1) i = cfg.colors.length - 1;
+    return cfg.colors[Math.max(0, i)] + "B8";
+  }
+  async function loadHeat(metric) {
+    if (heatVals[metric]) return heatVals[metric];
+    const out = {};
+    if (metric === "rate") {
+      banks.forEach(b => {
+        const isoList = [b.iso2, ...(b.members || [])];
+        countries.features.forEach(f => {
+          const p = f.properties;
+          if (isoList.includes(p.ISO_A2)) out[p.ISO_A3_EH !== "-99" ? p.ISO_A3_EH : p.ISO_A3] = b.rate;
+        });
+      });
+    } else {
+      const cfg = HEATCFG[metric];
+      const j = await MP.getJSON(`https://api.worldbank.org/v2/country/all/indicator/${cfg.code}?format=json&mrnev=1&per_page=400`);
+      ((j && j[1]) || []).forEach(r => { if (r.value != null && r.countryiso3code) out[r.countryiso3code] = +r.value; });
+    }
+    heatVals[metric] = out;
+    return out;
+  }
+  async function setHeat(metric) {
+    heatOn = metric;
+    document.querySelectorAll("#heatchips button").forEach(b => b.classList.toggle("on", b.dataset.h === metric));
+    const leg = document.getElementById("heatlegend");
+    if (!metric) { leg.hidden = true; globe.polygonCapColor(() => "rgba(37, 99, 235, 0.06)"); return; }
+    const cfg = HEATCFG[metric];
+    const vals = await loadHeat(metric);
+    leg.hidden = false;
+    leg.textContent = cfg.label + " · " + cfg.stops[0] + " → " + cfg.stops[cfg.stops.length - 1] + "+";
+    globe.polygonCapColor(f => {
+      const p = f.properties;
+      return heatColor(cfg, vals[p.ISO_A3_EH !== "-99" ? p.ISO_A3_EH : p.ISO_A3]);
+    });
+    window.AtlasContext = { ...(window.AtlasContext || {}), heatmap: metric };
+  }
+  document.querySelectorAll("#heatchips button").forEach(b => b.addEventListener("click", () => setHeat(b.dataset.h)));
+  const heatParam = new URLSearchParams(location.search).get("heat");
+  if (heatParam && HEATCFG[heatParam]) setHeat(heatParam);
+  window.AtlasContext = { view: "globe", heatmap: heatParam || "none" };
 
   // deep link: globe.html?focus=France opens that country's briefing
   const focusName = new URLSearchParams(location.search).get("focus");
@@ -82,6 +134,7 @@
 
   async function openCountry(p) {
     globe.controls().autoRotate = false;
+    window.AtlasContext = { view: "globe — country briefing open", country: p.ADMIN, heatmap: heatOn || "none" };
     const { a3, a2 } = isoOf(p);
     const name = p.ADMIN;
     panel.classList.add("open");

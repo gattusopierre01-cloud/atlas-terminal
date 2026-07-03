@@ -39,6 +39,11 @@
       `<div class="small" style="margin-top:8px">As of ${cb.as_of}.</div>`;
   }
 
+  window.AtlasContext = { view: "morning brief",
+    scoreboard: ((markets && markets.indices) || []).map(i => ({ n: i.name, last: i.last, d1: i.r1d })),
+    centralBanks: (cb && cb.banks || []).map(b => ({ bank: b.bank, rate: b.range || b.rate + "%", next: b.next_decision })),
+    headlines: [] };
+
   // headline lanes
   const dedupe = new Set();
   async function lane(el, query, titleMust = []) {
@@ -50,6 +55,7 @@
       if (strict.length >= 3) arts = strict;
     }
     arts = arts.filter(a => { const k = a.title.slice(0, 60); if (dedupe.has(k)) return false; dedupe.add(k); return true; }).slice(0, 6);
+    arts.forEach(a => window.AtlasContext.headlines.push(a.title));
     el.innerHTML = arts.length
       ? arts.map(a => `<div class="news-item"><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a>
           <div class="src">${a.domain} · ${(a.seendate || "").slice(0, 8).replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")}</div></div>`).join("")
