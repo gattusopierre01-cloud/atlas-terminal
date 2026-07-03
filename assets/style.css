@@ -473,3 +473,15 @@ svg.spark { display: block; }
   font-family:var(--font-mono); font-size:13px; color:var(--ink) }
 @media (max-width:1120px){ .portals{ display:none } }
 @media (prefers-reduced-motion: reduce){ .portal{ animation:none } .portal .drawline path.line{ animation:none; stroke-dashoffset:0 } .orbits i{ animation:none } }
+
+/* ---------- Atlas summon (orb to center stage) ---------- */
+#atlas-veil { position:fixed; inset:0; z-index:185; background:rgba(4,9,17,.62); backdrop-filter:blur(7px);
+  opacity:0; pointer-events:none; transition:opacity .45s; }
+#atlas-veil.on { opacity:1; pointer-events:auto; }
+#atlas-orb { transition:transform .65s cubic-bezier(.22,.9,.24,1), filter .4s; }
+#atlas-orb.summoned { z-index:195; filter:drop-shadow(0 0 46px rgba(90,220,255,.75)); }
+#atlas-orb.summoned .core { animation-duration:2.2s; }
+#atlas-chat.centered { right:auto; bottom:auto; left:50%; top:calc(14% + 132px);
+  transform:translateX(-50%); width:min(600px, 94vw); max-height:56vh; z-index:196; }
+@media (max-width:720px){ #atlas-chat.centered { top:calc(10% + 96px); max-height:62vh } }
+@media (prefers-reduced-motion: reduce){ #atlas-orb { transition:none } #atlas-veil { transition:none } }

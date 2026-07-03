@@ -124,7 +124,7 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
     orb.id = "atlas-orb"; orb.setAttribute("aria-label", "Ask Atlas");
     orb.innerHTML = `<span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span><span class="core"></span>`;
     document.body.appendChild(orb);
-    orb.addEventListener("click", () => openChat());
+    orb.addEventListener("click", () => document.getElementById("atlas-chat") && !document.getElementById("atlas-chat").hidden ? dismiss() : openChat());
 
     // chat panel
     const p = document.createElement("div");
@@ -156,7 +156,12 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
       </div>`;
     document.body.appendChild(p);
 
-    $("ac-x").onclick = () => p.hidden = true;
+    const veil = document.createElement("div");
+    veil.id = "atlas-veil";
+    document.body.appendChild(veil);
+    veil.addEventListener("click", dismiss);
+
+    $("ac-x").onclick = dismiss;
     $("ac-gear").onclick = () => {
       const s = $("ac-settings"); s.hidden = !s.hidden;
       $("ac-key").value = getKey(); $("ac-model").value = getModel();
@@ -188,7 +193,7 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
     $("ac-mic").onclick = () => listen(t => { $("ac-in").value = t; send(); },
       st => $("ac-mic").classList.toggle("live", st === "listening"));
     $("ac-send").onclick = send;
-    $("ac-in").addEventListener("keydown", e => { if (e.key === "Enter") send(); if (e.key === "Escape") p.hidden = true; });
+    $("ac-in").addEventListener("keydown", e => { if (e.key === "Enter") send(); if (e.key === "Escape") dismiss(); });
   }
 
   function el(cls, html) { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; $("ac-msgs").appendChild(d); $("ac-msgs").scrollTop = 1e9; return d; }
@@ -223,10 +228,39 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
     if (orbEl) orbEl.classList.remove("busy");
   }
 
+  function summonOrb() {
+    const orb = $("atlas-orb");
+    if (!orb) return;
+    const mobile = window.innerWidth < 720;
+    orb.style.transform = "";                       // measure from rest position
+    const r = orb.getBoundingClientRect();
+    const targetX = window.innerWidth / 2;
+    const targetY = window.innerHeight * (mobile ? 0.13 : 0.17) + r.height / 2;
+    const dx = targetX - (r.left + r.width / 2);
+    const dy = targetY - (r.top + r.height / 2);
+    orb.classList.add("summoned");
+    requestAnimationFrame(() =>
+      orb.style.transform = `translate(${dx.toFixed(0)}px, ${dy.toFixed(0)}px) scale(${mobile ? 1.9 : 2.5})`);
+    const v = document.getElementById("atlas-veil"); if (v) v.classList.add("on");
+    document.getElementById("atlas-chat").classList.add("centered");
+  }
+  function dismiss() {
+    const p = $("atlas-chat"), orb = $("atlas-orb"), v = document.getElementById("atlas-veil");
+    if (p) { p.hidden = true; p.classList.remove("centered"); }
+    if (orb) { orb.style.transform = ""; orb.classList.remove("summoned"); }
+    if (v) v.classList.remove("on");
+    if (window.speechSynthesis) speechSynthesis.cancel();
+  }
+  window.addEventListener("resize", () => {
+    const p = $("atlas-chat");
+    if (p && !p.hidden && p.classList.contains("centered")) summonOrb();
+  });
+
   function openChat(prefill) {
     const p = $("atlas-chat");
     if (!p) return;
     p.hidden = false;
+    summonOrb();
     if (!$("ac-msgs").children.length) {
       sysMsg(getKey()
         ? "Atlas online. I can read this page's live data — ask away, or tell me where to go."
