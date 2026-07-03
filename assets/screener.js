@@ -17,8 +17,9 @@
 
   const cells = r => {
     const sc = r.score;
+    const starred = MP.watch.has(r.ticker);
     return `<tr class="row" onclick="location.href='company.html?t=${encodeURIComponent(r.ticker)}'">
-      <td class="name-cell"><span class="tk">${r.ticker}</span><span class="co">${r.longName || r.name || ""}</span></td>
+      <td class="name-cell"><span class="star ${starred ? "on" : ""}" data-t="${r.ticker}" title="Watchlist">★</span><span class="tk">${r.ticker}</span><span class="co">${r.longName || r.name || ""}</span></td>
       <td><span class="pill score-pill" style="background:${MP.fmt.scoreColor(sc)}">${sc === null || sc === undefined ? "—" : sc.toFixed(0)}</span></td>
       <td>${MP.fmt.num(r.last)}</td>
       <td class="${MP.fmt.cls(r.r1d)}">${MP.fmt.pct(r.r1d)}</td>
@@ -39,7 +40,8 @@
       (!state.q || (r.ticker + " " + (r.longName || r.name || "")).toLowerCase().includes(state.q)) &&
       (!state.region || r.region === state.region) &&
       (!state.sector || r.sector === state.sector) &&
-      (!state.min || (r.score !== null && r.score >= +state.min)));
+      (!state.min || (r.score !== null && r.score >= +state.min)) &&
+      (!state.watch || MP.watch.has(r.ticker)));
     rows.sort((a, b) => {
       const va = a[sortKey], vb = b[sortKey];
       if (va === null || va === undefined) return 1;
@@ -56,6 +58,15 @@
   document.getElementById("region").addEventListener("change", e => { state.region = e.target.value; render(); });
   sectorSel.addEventListener("change", e => { state.sector = e.target.value; render(); });
   document.getElementById("minscore").addEventListener("change", e => { state.min = e.target.value; render(); });
+  document.getElementById("watchonly").addEventListener("change", e => { state.watch = e.target.checked; render(); });
+  document.getElementById("rows").addEventListener("click", e => {
+    const st = e.target.closest(".star");
+    if (!st) return;
+    e.stopPropagation();
+    const on = MP.watch.toggle(st.dataset.t);
+    st.classList.toggle("on", on);
+    if (state.watch) render();
+  });
 
   document.querySelectorAll("th[data-k]").forEach(th => th.addEventListener("click", () => {
     const k = th.dataset.k;

@@ -5,7 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=11">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Markets — Atlas Terminal">
+<meta property="og:description" content="Indices, sector heatmap, movers, daily signals and your watchlist.">
+<meta property="og:url" content="https://gattusopierre01-cloud.github.io/atlas-terminal/markets.html">
+<meta property="og:image" content="https://gattusopierre01-cloud.github.io/atlas-terminal/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Markets — Atlas Terminal">
+<meta name="twitter:description" content="Indices, sector heatmap, movers, daily signals and your watchlist.">
+<meta name="twitter:image" content="https://gattusopierre01-cloud.github.io/atlas-terminal/assets/og.png">
+<link rel="stylesheet" href="assets/style.css?v=13">
 <title>Markets — Atlas Terminal</title>
 </head>
 <body>
@@ -17,14 +29,22 @@
   <div class="grid g3" id="indices"><div class="skeleton">Loading…</div></div>
   <h2 class="section">US sector heatmap <span class="small" style="font-family:var(--font-body)">— 1-day performance via sector ETFs</span></h2>
   <div class="heat" id="sectors"></div>
+  <h2 class="section">Today's signals <span class="small" style="font-family:var(--font-body)" id="sig-when"></span></h2>
+  <div class="grid g3" id="signals"><div class="skeleton">Signals appear after the next nightly run.</div></div>
+
+  <div class="grid g2" style="margin-top:26px; align-items:start">
+    <div class="card"><div class="k" style="margin-bottom:8px">Earnings — next 10 days</div><div id="earnings"><div class="small">—</div></div></div>
+    <div class="card"><div class="k" style="margin-bottom:8px">★ My watchlist</div><div id="mywatch"><div class="small">Star stocks in the screener or on company pages — they appear here.</div></div></div>
+  </div>
+
   <h2 class="section">Top movers in the Atlas Terminal universe</h2>
   <div class="grid g2">
     <div class="card"><div class="k" style="margin-bottom:8px">Gainers</div><div id="gainers"></div></div>
     <div class="card"><div class="k" style="margin-bottom:8px">Losers</div><div id="losers"></div></div>
   </div>
 </main>
-<script src="assets/app.js?v=11"></script>
-<script src="assets/atlas-ai.js?v=11"></script>
-<script src="assets/markets.js?v=11"></script>
+<script src="assets/app.js?v=13"></script>
+<script src="assets/atlas-ai.js?v=13"></script>
+<script src="assets/markets.js?v=13"></script>
 </body>
 </html>

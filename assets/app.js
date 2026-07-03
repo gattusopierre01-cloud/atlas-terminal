@@ -223,5 +223,19 @@ const MP = (() => {
         ${t1 ? '<span class="t1badge">●</span>' : ""} · ${newsAge(a.seendate)}</div></div></div>`;
   }
 
-  return { fmt, spark, lineChart, getJSON, getJSONx, shell, openPalette, newsRank, newsItem };
+  // ---------- watchlist (stored on this device) ----------
+  const WKEY = "atlas.watch";
+  const watch = {
+    all() { try { return JSON.parse(localStorage.getItem(WKEY) || "[]"); } catch { return []; } },
+    has(t) { return watch.all().includes(t); },
+    toggle(t) {
+      const a = watch.all();
+      const i = a.indexOf(t);
+      if (i >= 0) a.splice(i, 1); else a.push(t);
+      try { localStorage.setItem(WKEY, JSON.stringify(a)); } catch {}
+      return i < 0;
+    }
+  };
+
+  return { fmt, spark, lineChart, getJSON, getJSONx, shell, openPalette, newsRank, newsItem, watch };
 })();

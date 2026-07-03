@@ -40,4 +40,54 @@
     </div>`;
   document.getElementById("gainers").innerHTML = (m.gainers || []).map(mover).join("") || '<div class="small">—</div>';
   document.getElementById("losers").innerHTML = (m.losers || []).map(mover).join("") || '<div class="small">—</div>';
+
+  // ---------- signals ----------
+  const sig = await MP.getJSON("data/signals.json");
+  const SIGCFG = [
+    ["golden", "Golden crosses", "50-day crossed above 200-day", "var(--up)"],
+    ["oversold", "Oversold (RSI ≤ 30)", "stretched to the downside", "var(--amber)"],
+    ["high52", "New 52-week highs", "breaking out", "var(--blue-bright)"],
+    ["low52", "New 52-week lows", "breaking down", "var(--down)"],
+    ["bigmoves", "Big daily moves", "±6% or more today", "var(--ink)"],
+    ["score_moves", "Score jumps", "Opportunity Score moved ≥8 pts", "var(--up)"],
+  ];
+  if (sig) {
+    document.getElementById("sig-when").textContent = "— computed " + (sig.updated || "");
+    document.getElementById("signals").innerHTML = SIGCFG.map(([k, title, sub, col]) => {
+      const rows = sig[k] || [];
+      const body = rows.length ? rows.slice(0, 6).map(x =>
+        `<div class="ind-row" style="cursor:pointer;padding:7px 0" onclick="location.href='company.html?t=${encodeURIComponent(x.ticker)}'">
+          <span><span class="tk">${x.ticker}</span> <span class="small">${(x.name || "").slice(0, 20)}</span></span>
+          <span class="mono ${MP.fmt.cls(x.score_chg !== undefined ? x.score_chg : x.r1d)}">${x.score_chg !== undefined ? MP.fmt.pct(x.score_chg, 0).replace("%", " pts") : MP.fmt.pct(x.r1d)}</span>
+        </div>`).join("")
+        : '<div class="small" style="padding:6px 0">None today.</div>';
+      return `<div class="card"><div class="k" style="color:${col}">${title} ${rows.length ? `<span class="pill">${rows.length}</span>` : ""}</div>
+        <div class="small" style="margin:2px 0 6px">${sub}</div>${body}</div>`;
+    }).join("");
+    // earnings
+    const ee = sig.earnings || [];
+    document.getElementById("earnings").innerHTML = ee.length ? ee.slice(0, 10).map(x => {
+      const d = new Date(x.earn_ts * 1000);
+      return `<div class="ind-row" style="cursor:pointer;padding:7px 0" onclick="location.href='company.html?t=${encodeURIComponent(x.ticker)}'">
+        <span><span class="tk">${x.ticker}</span> <span class="small">${(x.name || "").slice(0, 22)}</span></span>
+        <span class="mono small">${d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</span></div>`;
+    }).join("") : '<div class="small">No confirmed dates in the next 10 days.</div>';
+  }
+
+  // ---------- watchlist ----------
+  const wl = MP.watch.all();
+  if (wl.length) {
+    const scr = await MP.getJSON("data/screener.json") || [];
+    const rows = wl.map(t => scr.find(r => r.ticker === t)).filter(Boolean);
+    document.getElementById("mywatch").innerHTML = rows.map(r =>
+      `<div class="ind-row" style="cursor:pointer;padding:7px 0" onclick="location.href='company.html?t=${encodeURIComponent(r.ticker)}'">
+        <span><span class="tk">${r.ticker}</span> <span class="pill score-pill" style="background:${MP.fmt.scoreColor(r.score)}">${r.score == null ? "—" : r.score.toFixed(0)}</span></span>
+        <span class="mono">${MP.fmt.num(r.last)} <span class="${MP.fmt.cls(r.r1d)}">${MP.fmt.pct(r.r1d)}</span></span></div>`).join("")
+      || '<div class="small">Starred names weren\'t found in the current dataset.</div>';
+  }
+
+  window.AtlasContext = { view: "markets dashboard",
+    indices: (m.indices || []).map(i => ({ n: i.name, last: i.last, d1: i.r1d })),
+    signals: sig ? Object.fromEntries(SIGCFG.map(([k]) => [k, (sig[k] || []).map(x => x.ticker)])) : null,
+    watchlist: MP.watch.all() };
 })();

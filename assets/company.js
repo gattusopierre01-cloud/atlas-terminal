@@ -22,6 +22,8 @@
     <div class="co-head">
       <h1>${name}</h1>
       <span class="mono" style="font-size:20px;color:var(--blue-bright)">${r.ticker}</span>
+      <button class="star-btn ${MP.watch.has(r.ticker) ? "on" : ""}" id="co-star" title="Watchlist">★</button>
+      ${r.earn_ts ? `<span class="pill" style="border-color:var(--amber);color:var(--amber)">earnings ${new Date(r.earn_ts * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>` : ""}
     </div>
     <div style="margin-bottom:16px">
       ${r.sector ? `<span class="pill">${r.sector}</span>` : ""}${r.industry ? `<span class="pill">${r.industry}</span>` : ""}
@@ -91,6 +93,9 @@
       rev_growth: r.rev_growth, eps_growth: r.eps_growth, de: r.de, div_yield: r.div_yield,
       rsi: r.rsi, r1d: r.r1d, r6m: r.r6m, r1y: r.r1y, from_high: r.from_high, mcap: r.mcap, beta: r.beta },
     reasons: r.reasons, sector: r.sector, region: r.region };
+
+  document.getElementById("co-star").addEventListener("click", e =>
+    e.currentTarget.classList.toggle("on", MP.watch.toggle(r.ticker)));
 
   MP.lineChart(document.getElementById("chart"), (prices || {})[t] || []);
 

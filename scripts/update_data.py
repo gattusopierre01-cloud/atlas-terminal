@@ -220,7 +220,7 @@ FUND_KEYS = {
     "debtToEquity": "de", "currentRatio": "current_ratio",
     "dividendYield": "div_yield", "revenueGrowth": "rev_growth",
     "earningsGrowth": "eps_growth", "freeCashflow": "fcf",
-    "marketCap": "mcap", "beta": "beta",
+    "marketCap": "mcap", "beta": "beta", "earningsTimestamp": "earn_ts",
 }
 PCT_KEYS = {"net_margin", "gross_margin", "op_margin", "roe", "rev_growth", "eps_growth"}
 
@@ -321,8 +321,51 @@ def reasons_for(row):
 
 
 # ---------------------------------------------------------------- main
+def build_signals(df, prev_scores):
+    """Daily signals digest for the Markets page and the Brief."""
+    def rows(d, extra=None):
+        cols = ["ticker", "name", "last", "r1d", "sector"]
+        out = json.loads(d[cols].head(12).to_json(orient="records"))
+        if extra:
+            for o, e in zip(out, json.loads(d[extra].head(12).to_json(orient="records"))):
+                o.update(e)
+        return out
+    sig = {}
+    ok = df[df["last"].notna()]
+    sig["golden"] = rows(ok[ok["golden_cross"] == True])
+    sig["death"] = rows(ok[ok["death_cross"] == True])
+    sig["oversold"] = rows(ok[ok["rsi"] <= 30].sort_values("rsi"))
+    sig["high52"] = rows(ok[ok["from_high"] >= -0.5].sort_values("r1d", ascending=False))
+    sig["low52"] = rows(ok[ok["from_low"] <= 0.5].sort_values("r1d"))
+    sig["bigmoves"] = rows(ok[ok["r1d"].abs() >= 6].sort_values("r1d", key=lambda x: -x.abs()))
+    if prev_scores:
+        ok = ok.copy()
+        ok["score_prev"] = ok["ticker"].map(prev_scores)
+        ok["score_chg"] = ok["score"] - ok["score_prev"]
+        movers = ok[ok["score_chg"].abs() >= 8].sort_values("score_chg", key=lambda x: -x.abs())
+        sig["score_moves"] = rows(movers, extra=["score", "score_chg"])
+    else:
+        sig["score_moves"] = []
+    # earnings within the next 10 days (from Yahoo's earningsTimestamp)
+    import time as _t
+    now = _t.time()
+    if "earn_ts" in df.columns:
+        e = ok[(ok["earn_ts"] > now) & (ok["earn_ts"] < now + 10 * 86400)].sort_values("earn_ts")
+        sig["earnings"] = json.loads(e[["ticker", "name", "earn_ts", "mcap", "sector"]].head(20).to_json(orient="records"))
+    else:
+        sig["earnings"] = []
+    return sig
+
+
 def main():
     log("=== Atlas Terminal pipeline start ===")
+    prev_scores = {}
+    try:
+        for r in json.loads((DATA / "screener.json").read_text()):
+            if r.get("score") is not None:
+                prev_scores[r["ticker"]] = r["score"]
+    except Exception:
+        pass
     universe = get_universe()
     if not universe:
         raise SystemExit("FATAL: no index constituents could be fetched from Wikipedia — "
@@ -447,6 +490,14 @@ def main():
         {"indices": idx_out, "sectors": sec_out, "gainers": gain, "losers": lose},
         separators=(",", ":")))
     log("markets.json written")
+
+    try:
+        sig = build_signals(df, prev_scores)
+        sig["updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        (DATA / "signals.json").write_text(json.dumps(sig, separators=(",", ":")))
+        log("signals.json written (" + ", ".join(f"{k}:{len(v)}" for k, v in sig.items() if isinstance(v, list)) + ")")
+    except Exception:
+        log("signals build failed:\n" + traceback.format_exc())
 
     (DATA / "meta.json").write_text(json.dumps({
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),

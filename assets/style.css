@@ -485,3 +485,12 @@ svg.spark { display: block; }
   transform:translateX(-50%); width:min(600px, 94vw); max-height:56vh; z-index:196; }
 @media (max-width:720px){ #atlas-chat.centered { top:calc(10% + 96px); max-height:62vh } }
 @media (prefers-reduced-motion: reduce){ #atlas-orb { transition:none } #atlas-veil { transition:none } }
+
+/* ---------- watchlist stars ---------- */
+.star { color:var(--faint); cursor:pointer; margin-right:8px; font-size:14px; transition:color .15s, transform .15s; display:inline-block }
+.star:hover { color:var(--amber); transform:scale(1.25) }
+.star.on { color:var(--amber) }
+.star-btn { background:none; border:1px solid var(--line); color:var(--faint); border-radius:8px;
+  width:34px; height:34px; font-size:16px; cursor:pointer }
+.star-btn:hover { border-color:var(--amber); color:var(--amber) }
+.star-btn.on { color:var(--amber); border-color:var(--amber) }
