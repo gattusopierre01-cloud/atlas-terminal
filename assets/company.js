@@ -98,6 +98,6 @@
   const g = await MP.getJSONx(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q}%20sourcelang:eng&mode=ArtList&format=json&maxrecords=6&sort=DateDesc`);
   const arts = g && g.articles ? g.articles.filter(a => a.title) : [];
   document.getElementById("news").innerHTML = arts.length
-    ? arts.map(a => `<div class="news-item"><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a><div class="src">${a.domain}</div></div>`).join("")
+    ? MP.newsRank(arts).slice(0, 6).map(a => MP.newsItem(a)).join("")
     : `<div class="small">No recent headlines found via GDELT.</div>`;
 })();

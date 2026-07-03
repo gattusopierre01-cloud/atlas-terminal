@@ -48,8 +48,8 @@
   const dedupe = new Set();
   async function lane(el, query, titleMust = []) {
     const g = await MP.getJSONx("https://api.gdeltproject.org/api/v2/doc/doc?query=" +
-      encodeURIComponent(query) + "%20sourcelang:eng&mode=ArtList&format=json&maxrecords=18&sort=DateDesc");
-    let arts = g && g.articles ? g.articles.filter(a => a.title) : [];
+      encodeURIComponent(query) + "%20sourcelang:eng&mode=ArtList&format=json&maxrecords=40&timespan=3d&sort=DateDesc");
+    let arts = MP.newsRank(g && g.articles);
     if (titleMust.length) {
       const strict = arts.filter(a => titleMust.some(k => a.title.toLowerCase().includes(k)));
       if (strict.length >= 3) arts = strict;
@@ -57,8 +57,7 @@
     arts = arts.filter(a => { const k = a.title.slice(0, 60); if (dedupe.has(k)) return false; dedupe.add(k); return true; }).slice(0, 6);
     arts.forEach(a => window.AtlasContext.headlines.push(a.title));
     el.innerHTML = arts.length
-      ? arts.map(a => `<div class="news-item"><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a>
-          <div class="src">${a.domain} · ${(a.seendate || "").slice(0, 8).replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")}</div></div>`).join("")
+      ? arts.map((a, i) => MP.newsItem(a, i === 0)).join("")
       : '<div class="small">Nothing fresh found in this lane right now.</div>';
   }
   lane($("lane-cb"), '("central bank" OR "interest rate" OR "rate decision" OR "monetary policy" OR Fed OR ECB)', ["rate", "fed", "ecb", "central bank", "boe", "inflation"]);

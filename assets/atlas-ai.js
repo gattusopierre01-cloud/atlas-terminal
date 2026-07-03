@@ -122,7 +122,7 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
     // floating orb
     const orb = document.createElement("button");
     orb.id = "atlas-orb"; orb.setAttribute("aria-label", "Ask Atlas");
-    orb.innerHTML = `<span class="core"></span>`;
+    orb.innerHTML = `<span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span><span class="core"></span>`;
     document.body.appendChild(orb);
     orb.addEventListener("click", () => openChat());
 
@@ -207,6 +207,7 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
       return;
     }
     busy = true;
+    const orbEl = document.getElementById("atlas-orb"); if (orbEl) orbEl.classList.add("busy");
     const out = el("ac-m ai", '<span class="ac-cursor">▋</span>');
     try {
       const full = await ask(q, partial => { out.innerHTML = esc(partial) + '<span class="ac-cursor">▋</span>'; });
@@ -219,6 +220,7 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
       out.innerHTML = `<span style="color:var(--amber)">${esc(e.message)}</span>`;
     }
     busy = false;
+    if (orbEl) orbEl.classList.remove("busy");
   }
 
   function openChat(prefill) {

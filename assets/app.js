@@ -179,5 +179,38 @@ const MP = (() => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(); }
   });
 
-  return { fmt, spark, lineChart, getJSON, getJSONx, shell, openPalette };
+  // ---------- news quality layer ----------
+  const NEWS_T1 = ["reuters.com","bloomberg.com","ft.com","wsj.com","cnbc.com","economist.com",
+    "apnews.com","theguardian.com","bbc.com","bbc.co.uk","marketwatch.com","finance.yahoo.com",
+    "investing.com","forbes.com","fortune.com","businessinsider.com","politico.eu","politico.com",
+    "nytimes.com","washingtonpost.com","axios.com","barrons.com","spglobal.com","cnn.com","euronews.com"];
+  const newsTier = d => NEWS_T1.some(t => (d || "").endsWith(t)) ? 1 : 2;
+  function newsRank(arts) {
+    const seen = new Set();
+    return (arts || [])
+      .filter(a => a && a.title && a.title.length > 24)
+      .filter(a => { const k = a.title.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 52);
+        if (seen.has(k)) return false; seen.add(k); return true; })
+      .sort((a, b) => (newsTier(a.domain) - newsTier(b.domain)) ||
+        String(b.seendate || "").localeCompare(String(a.seendate || "")));
+  }
+  function newsAge(seendate) {
+    if (!seendate || seendate.length < 12) return "";
+    const d = new Date(Date.UTC(+seendate.slice(0,4), +seendate.slice(4,6)-1, +seendate.slice(6,8),
+      +seendate.slice(8,10), +seendate.slice(10,12)));
+    const h = Math.max(0, (Date.now() - d) / 36e5);
+    return h < 1 ? Math.round(h * 60) + "m ago" : h < 24 ? Math.round(h) + "h ago" : Math.round(h / 24) + "d ago";
+  }
+  function newsItem(a, withThumb = false) {
+    const fav = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(a.domain || "")}&sz=32`;
+    const t1 = newsTier(a.domain) === 1;
+    const thumb = withThumb && a.socialimage
+      ? `<img class="nthumb" src="${a.socialimage}" alt="" loading="lazy" onerror="this.remove()">` : "";
+    return `<div class="news-item ${t1 ? "t1" : ""}">${thumb}<div class="nbody">
+      <a href="${a.url}" target="_blank" rel="noopener">${a.title}</a>
+      <div class="src"><img class="nfav" src="${fav}" alt="" loading="lazy">${a.domain || ""}
+        ${t1 ? '<span class="t1badge">●</span>' : ""} · ${newsAge(a.seendate)}</div></div></div>`;
+  }
+
+  return { fmt, spark, lineChart, getJSON, getJSONx, shell, openPalette, newsRank, newsItem };
 })();
