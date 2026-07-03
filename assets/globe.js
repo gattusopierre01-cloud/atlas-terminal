@@ -177,14 +177,14 @@
     const keys = ALIAS[name] || [name];
     const kMain = keys[0];
     const q1 = encodeURIComponent(`("${kMain} economy" OR "${kMain} inflation" OR "${kMain} GDP" OR "${kMain} economic" OR "${kMain} central bank")`);
-    let g = await MP.getJSONx(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q1}%20sourcelang:eng&mode=ArtList&format=json&maxrecords=36&timespan=5d&sort=DateDesc`);
+    let g = await MP.getJSONx(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q1}%20sourcelang:eng&mode=ArtList&format=json&maxrecords=36&timespan=5days&sort=DateDesc`);
     let arts = MP.newsRank(g && g.articles);
     const aboutCountry = a => keys.some(k => a.title.toLowerCase().includes(k.toLowerCase().trim()));
     let filtered = arts.filter(aboutCountry);
     if (filtered.length < 2) {
       // broader retry: plain mention query, still title-filtered
       const q2 = encodeURIComponent(`"${kMain}" (economy OR inflation OR "central bank" OR GDP OR markets)`);
-      g = await MP.getJSONx(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q2}%20sourcelang:eng&mode=ArtList&format=json&maxrecords=40&timespan=7d&sort=DateDesc`);
+      g = await MP.getJSONx(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q2}%20sourcelang:eng&mode=ArtList&format=json&maxrecords=40&timespan=7days&sort=DateDesc`);
       arts = MP.newsRank(g && g.articles);
       filtered = arts.filter(aboutCountry);
       if (filtered.length < 2) filtered = arts.slice(0, 6); // last resort: show mentions, labelled
@@ -195,7 +195,9 @@
     newsEl.innerHTML = filtered.length
       ? (strict ? "" : `<div class="small" style="margin-bottom:6px">Few direct headlines — showing recent articles mentioning ${kMain}:</div>`) +
         filtered.map(a => MP.newsItem(a)).join("")
-      : `<div class="small">No recent English-language economic headlines found for ${name}.</div>`;
+      : (g === null
+        ? `<div class="small">The news service didn't respond (it rate-limits busy periods) — close and reopen this country to retry.</div>`
+        : `<div class="small">No recent English-language economic headlines found for ${name}.</div>`);
   }
 
   function cbCard(b) {

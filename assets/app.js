@@ -64,11 +64,22 @@ const MP = (() => {
     catch { return null; }
   }
 
-  // For third-party APIs that may not send CORS headers: try direct, then a public CORS proxy
+  // For third-party APIs that may not send CORS headers:
+  // direct → allorigins → corsproxy, each with an 8s timeout
+  async function getJSONt(url, ms = 8000) {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), ms);
+    try {
+      const r = await fetch(url, { signal: ctl.signal });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch { return null; }
+    finally { clearTimeout(t); }
+  }
   async function getJSONx(url) {
-    const direct = await getJSON(url);
-    if (direct) return direct;
-    return await getJSON("https://api.allorigins.win/raw?url=" + encodeURIComponent(url));
+    return await getJSONt(url)
+      || await getJSONt("https://api.allorigins.win/raw?url=" + encodeURIComponent(url), 9000)
+      || await getJSONt("https://corsproxy.io/?url=" + encodeURIComponent(url), 9000);
   }
 
   // Nav + tape injected on every page

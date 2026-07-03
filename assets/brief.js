@@ -47,9 +47,15 @@
   // headline lanes
   const dedupe = new Set();
   async function lane(el, query, titleMust = []) {
+    el.innerHTML = '<div class="skeleton">Loading headlines…</div>';
     const g = await MP.getJSONx("https://api.gdeltproject.org/api/v2/doc/doc?query=" +
-      encodeURIComponent(query) + "%20sourcelang:eng&mode=ArtList&format=json&maxrecords=40&timespan=3d&sort=DateDesc");
-    let arts = MP.newsRank(g && g.articles);
+      encodeURIComponent(query) + "%20sourcelang:eng&mode=ArtList&format=json&maxrecords=40&timespan=3days&sort=DateDesc");
+    if (!g) {
+      el.innerHTML = '<div class="small">Couldn\'t reach the news service just now (it rate-limits busy periods). <a href="#" class="lane-retry">Retry</a></div>';
+      el.querySelector(".lane-retry").addEventListener("click", e => { e.preventDefault(); lane(el, query, titleMust); });
+      return;
+    }
+    let arts = MP.newsRank(g.articles);
     if (titleMust.length) {
       const strict = arts.filter(a => titleMust.some(k => a.title.toLowerCase().includes(k)));
       if (strict.length >= 3) arts = strict;
