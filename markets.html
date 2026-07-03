@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<title>Markets — Atlas Terminal</title>
+</head>
+<body>
+<main class="wrap">
+  <div class="eyebrow">Daily dashboard</div>
+  <h1 class="display">Markets <em>today.</em></h1>
+  <div id="banner"></div>
+  <h2 class="section">Major indices</h2>
+  <div class="grid g3" id="indices"><div class="skeleton">Loading…</div></div>
+  <h2 class="section">US sector heatmap <span class="small" style="font-family:var(--font-body)">— 1-day performance via sector ETFs</span></h2>
+  <div class="heat" id="sectors"></div>
+  <h2 class="section">Top movers in the Atlas Terminal universe</h2>
+  <div class="grid g2">
+    <div class="card"><div class="k" style="margin-bottom:8px">Gainers</div><div id="gainers"></div></div>
+    <div class="card"><div class="k" style="margin-bottom:8px">Losers</div><div id="losers"></div></div>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+<script src="assets/markets.js"></script>
+</body>
+</html>

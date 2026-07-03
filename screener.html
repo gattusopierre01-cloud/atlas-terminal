@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<title>Screener — Atlas Terminal</title>
+</head>
+<body>
+<main class="wrap" style="max-width:1400px">
+  <div class="eyebrow">Equity screener</div>
+  <h1 class="display">Opportunity <em>scores.</em></h1>
+  <p class="lede">Every stock in the S&amp;P 500, Nasdaq 100, FTSE 100 and Euro Stoxx 50, ranked by a transparent four-pillar score. Click any row for the full breakdown. <a href="methodology.html">How the score works →</a></p>
+  <div id="banner"></div>
+  <div class="controls">
+    <input type="search" id="q" placeholder="Search ticker or company…">
+    <select id="region"><option value="">All regions</option><option>US</option><option>UK</option><option>EU</option></select>
+    <select id="sector"><option value="">All sectors</option></select>
+    <select id="minscore"><option value="">Any score</option><option value="75">Score ≥ 75</option><option value="60">Score ≥ 60</option><option value="40">Score ≥ 40</option></select>
+    <span class="small" id="count"></span>
+  </div>
+  <div style="overflow-x:auto">
+  <table class="tbl" id="tbl">
+    <thead><tr>
+      <th data-k="ticker">Company</th><th data-k="score" class="sorted">Score ▾</th>
+      <th data-k="last">Price</th><th data-k="r1d">1D</th><th data-k="r6m">6M</th><th data-k="r1y">1Y</th>
+      <th data-k="fpe">Fwd P/E</th><th data-k="ev_ebitda">EV/EBITDA</th><th data-k="roe">ROE</th>
+      <th data-k="op_margin">Op margin</th><th data-k="rev_growth">Rev gr.</th><th data-k="rsi">RSI</th><th data-k="mcap">Mkt cap</th>
+    </tr></thead>
+    <tbody id="rows"><tr><td colspan="13" class="skeleton">Loading universe…</td></tr></tbody>
+  </table>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+<script src="assets/screener.js"></script>
+</body>
+</html>

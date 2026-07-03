@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas Terminal — the world economy, live</title>
+<meta name="description" content="Interactive macroeconomic globe: click any country for growth, inflation, policy rates and live economic news.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="hero-globe">
+  <div id="globe"></div>
+  <div class="hero-copy">
+    <div class="eyebrow">Global macro terminal</div>
+    <h1 class="display">The world economy,<br><em>one sphere.</em></h1>
+    <p class="lede">Click any country for growth, inflation, unemployment, its central bank's policy rate and the latest economic headlines — pulled live from World Bank and GDELT data.</p>
+  </div>
+  <div class="hero-hint"><span class="dot"></span>Drag to rotate · click a country to open its briefing</div>
+
+  <aside class="country-panel" id="panel" aria-live="polite">
+    <button class="close" id="panel-close" aria-label="Close panel">✕</button>
+    <div id="panel-body"></div>
+  </aside>
+</div>
+
+<script src="https://unpkg.com/globe.gl@2.32.2/dist/globe.gl.min.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/globe.js"></script>
+</body>
+</html>

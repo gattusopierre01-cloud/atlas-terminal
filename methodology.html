@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Methodology — Atlas Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="wrap" style="max-width:860px">
+  <div class="eyebrow">How it works</div>
+  <h1 class="display">Methodology, <em>in the open.</em></h1>
+  <p class="lede">Every number on this site is reproducible from public data, and the full pipeline is open source in this repository. Here is exactly how the Opportunity Score is built — and what it is not.</p>
+
+  <h2 class="section">What the score is</h2>
+  <p>The Opportunity Score is a 0–100 percentile ranking of roughly 650 large-cap stocks (S&amp;P 500, Nasdaq 100, FTSE 100 and Euro Stoxx 50 constituents) against each other, refreshed each trading day after the US close. A score of 80 means a stock ranks better than about 80% of the universe on a weighted blend of four pillars. It is a screening signal designed to surface names worth researching — it is not a forecast, a price target, or investment advice.</p>
+
+  <h2 class="section">The four pillars</h2>
+  <div class="card" style="margin-bottom:12px"><b>Valuation — 25%.</b><br><span class="small" style="font-size:14px">Percentile ranks of forward P/E, trailing P/E, EV/EBITDA and price-to-book, where cheaper ranks higher. Negative-earnings names are excluded from the P/E ranks rather than penalized, since a loss-making growth company and a distressed company look identical on a negative P/E.</span></div>
+  <div class="card" style="margin-bottom:12px"><b>Quality — 25%.</b><br><span class="small" style="font-size:14px">Return on equity, operating margin, gross margin (higher is better) and debt-to-equity (lower is better). This pillar rewards businesses that convert revenue into profit efficiently without leaning on leverage.</span></div>
+  <div class="card" style="margin-bottom:12px"><b>Momentum — 30%.</b><br><span class="small" style="font-size:14px">Percentile ranks of 3-month, 6-month and 12-month total returns, with a small bonus for trading above the 200-day moving average and for a golden cross (50-day average crossing above the 200-day) within the past month. Momentum gets the largest weight because it is the best-documented factor at this horizon in the academic literature.</span></div>
+  <div class="card" style="margin-bottom:12px"><b>Growth — 20%.</b><br><span class="small" style="font-size:14px">Year-on-year revenue growth and earnings growth, percentile ranked.</span></div>
+
+  <h2 class="section">Handling missing data</h2>
+  <p>Coverage is imperfect, particularly for some European names on the free data feed. When a metric is missing it is simply excluded and the remaining metrics in that pillar are re-averaged; when an entire pillar is missing, its weight is redistributed across the others. Missing data never counts against a company — it just means the score rests on less evidence, which is why every company page shows exactly which figures are populated.</p>
+
+  <h2 class="section">Data sources &amp; refresh cycle</h2>
+  <p>Prices and fundamentals come from Yahoo Finance via the open-source <span class="mono" style="font-size:13px">yfinance</span> library, pulled by a scheduled GitHub Action each weekday at 22:15 UTC. Macro indicators on the globe are fetched live from the World Bank API. Economic and company headlines are fetched live from the GDELT Project. Central bank policy rates are maintained by hand in a small reference file with the source date shown.</p>
+
+  <h2 class="section">Known limitations</h2>
+  <p>Free fundamentals data can lag filings and occasionally contains errors. The score has no view on management, moats, litigation, or anything qualitative. Percentile ranking means scores are relative to this universe at this moment — a 90 in an expensive market is not the same as a 90 in a cheap one. And momentum, the heaviest pillar, mean-reverts violently at turning points. Treat every high score as a research starting point, never a conclusion.</p>
+
+  <div class="banner">Nothing on this site is investment advice or a recommendation to buy or sell any security. It is an open data-engineering and quantitative-screening project.</div>
+</main>
+<script src="assets/app.js"></script>
+<script>MP.shell("method");</script>
+</body>
+</html>

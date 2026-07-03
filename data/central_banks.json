@@ -1,0 +1,14 @@
+{
+  "_how_to_update": "After a rate decision: open this file on GitHub, click the pencil icon, change the rate/date, commit. Rates verified 2026-07-03. next_decision uses YYYY-MM-DD or null if not confirmed.",
+  "as_of": "2026-07-03",
+  "banks": [
+    {"iso2": "US", "country": "United States", "bank": "Federal Reserve", "rate_name": "Fed funds target (upper)", "rate": 3.75, "range": "3.50\u20133.75%", "last_move": "hold (Jun 2026)", "next_decision": "2026-07-29"},
+    {"iso2": "EU", "country": "Euro area", "bank": "European Central Bank", "rate_name": "Deposit facility rate", "rate": 2.25, "range": null, "last_move": "+0.25 (Jun 2026)", "next_decision": "2026-07-23", "members": ["AT","BE","HR","CY","EE","FI","FR","DE","GR","IE","IT","LV","LT","LU","MT","NL","PT","SK","SI","ES"]},
+    {"iso2": "GB", "country": "United Kingdom", "bank": "Bank of England", "rate_name": "Bank Rate", "rate": 3.75, "range": null, "last_move": "hold (Jun 2026)", "next_decision": null},
+    {"iso2": "CH", "country": "Switzerland", "bank": "Swiss National Bank", "rate_name": "SNB policy rate", "rate": 0.0, "range": null, "last_move": "hold (Jun 2026)", "next_decision": null},
+    {"iso2": "JP", "country": "Japan", "bank": "Bank of Japan", "rate_name": "Policy rate", "rate": 1.0, "range": null, "last_move": "+0.25 (Jun 2026)", "next_decision": null},
+    {"iso2": "CA", "country": "Canada", "bank": "Bank of Canada", "rate_name": "Overnight rate", "rate": 2.25, "range": null, "last_move": "hold (2026)", "next_decision": null},
+    {"iso2": "AU", "country": "Australia", "bank": "Reserve Bank of Australia", "rate_name": "Cash rate", "rate": 4.35, "range": null, "last_move": "+0.25 (2026)", "next_decision": null},
+    {"iso2": "NZ", "country": "New Zealand", "bank": "Reserve Bank of New Zealand", "rate_name": "Official cash rate", "rate": 2.25, "range": null, "last_move": "hold (2026)", "next_decision": null}
+  ]
+}
