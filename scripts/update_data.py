@@ -20,6 +20,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import requests
 import yfinance as yf
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -58,8 +59,17 @@ def log(msg):
 
 
 # ---------------------------------------------------------------- universes
+UA = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36 AtlasTerminal/1.0")}
+
+
 def _read_tables(url):
-    return pd.read_html(url, header=0)
+    """Wikipedia returns 403 to pandas' default user agent, so fetch with a
+    browser identity first and parse the HTML text."""
+    r = requests.get(url, headers=UA, timeout=30)
+    r.raise_for_status()
+    from io import StringIO
+    return pd.read_html(StringIO(r.text), header=0)
 
 
 def get_universe():
@@ -314,12 +324,18 @@ def reasons_for(row):
 def main():
     log("=== Atlas Terminal pipeline start ===")
     universe = get_universe()
+    if not universe:
+        raise SystemExit("FATAL: no index constituents could be fetched from Wikipedia — "
+                         "check the fetch errors logged above (layout change or network block).")
     if len(universe) < 300:
         log(f"WARNING: universe only has {len(universe)} names — Wikipedia layout may have changed")
     tickers = [u["ticker"] for u in universe]
 
     closes = download_prices(tickers)
     log(f"prices ok for {len(closes)}/{len(tickers)}")
+    if not closes:
+        raise SystemExit("FATAL: no prices downloaded from Yahoo Finance — "
+                         "likely a temporary block; re-run the workflow later.")
 
     log("fetching fundamentals (this is the slow part)…")
     rows, prices_out = [], {}
@@ -371,6 +387,9 @@ def main():
         t = technicals(idx_closes[sym])
         sec_out.append({"symbol": sym, "name": name, "r1d": t.get("r1d"),
                         "r1m": t.get("r1m"), "r1y": t.get("r1y")})
+    for c in ("r1d", "last", "sector", "region", "name"):
+        if c not in df.columns:
+            df[c] = np.nan
     movers = df[df["r1d"].notna()].copy()
     cols = ["ticker", "name", "last", "r1d", "sector", "region"]
     gain = json.loads(movers.nlargest(8, "r1d")[cols].to_json(orient="records"))
