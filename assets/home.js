@@ -8,7 +8,7 @@
   const TOWER_SYMS = [
     { sym: "^GSPC", x: 10, y: 46 }, { sym: "^NDX", x: 24, y: 52 },
     { sym: "^DJI", x: 38, y: 44 }, { sym: "^FTSE", x: 62, y: 50 },
-    { sym: "^STOXX50E", x: 76, y: 45 }, { sym: "^N225", x: 89, y: 53 },
+    { sym: "^STOXX50E", x: 66, y: 45 }, { sym: "^N225", x: 76, y: 55 },
   ];
 
   // ---------- optional photo backdrop (assets/nyc.jpg, user-supplied) ----------
@@ -111,6 +111,71 @@
   });
   const tip = $("towertip");
 
+  // ---------- holo portals: one interactive object per section ----------
+  const cbJ = await MP.getJSON("data/central_banks.json");
+  const scrJ = await MP.getJSON("data/screener.json");
+  const portals = $("portals");
+  function portal(kicker, viz, sub, href) {
+    const d = document.createElement("div");
+    d.className = "portal";
+    d.innerHTML = `<div class="p-k">${kicker}<span class="go">→</span></div><div class="p-viz">${viz}</div><div class="p-sub">${sub}</div>`;
+    d.addEventListener("click", () => location.href = href);
+    // 3D tilt toward the cursor
+    d.addEventListener("mousemove", e => {
+      const r = d.getBoundingClientRect();
+      const rx = ((e.clientY - r.top) / r.height - .5) * -14;
+      const ry = ((e.clientX - r.left) / r.width - .5) * 16;
+      d.style.transform = `rotateX(${rx.toFixed(1)}deg) rotateY(${ry.toFixed(1)}deg) translateZ(8px)`;
+    });
+    d.addEventListener("mouseleave", () => d.style.transform = "");
+    portals.appendChild(d);
+  }
+  if (portals) {
+    // MARKETS — S&P sparkline that draws itself
+    const gspc = idx["^GSPC"];
+    if (gspc && gspc.spark && gspc.spark.length > 3) {
+      const v = gspc.spark, min = Math.min(...v), max = Math.max(...v), rng = (max - min) || 1;
+      const pts = v.map((x, i) => `${(i / (v.length - 1) * 150).toFixed(1)},${(50 - (x - min) / rng * 44).toFixed(1)}`).join(" ");
+      const up = v[v.length - 1] >= v[0];
+      portal("Markets",
+        `<svg class="drawline" width="150" height="52" viewBox="0 0 150 52"><polyline class="line" points="${pts}" fill="none" stroke="${up ? "#2fbf71" : "#e5484d"}" stroke-width="2"/></svg>
+         <span class="p-num">${MP.fmt.num(gspc.last, 0)}</span>`,
+        `S&P 500 <span class="${MP.fmt.cls(gspc.r1d)}">${MP.fmt.pct(gspc.r1d)}</span> today — indices, sectors, movers`, "markets.html");
+    } else {
+      portal("Markets", `<span class="p-num">—</span>`, "Indices, sector heatmap and daily movers", "markets.html");
+    }
+    // SCREENER — top score ring counting up
+    const top = (scrJ || []).find(r => r.score != null);
+    if (top) {
+      const pct = Math.round(top.score);
+      portal("Screener",
+        `<svg class="ringviz" width="52" height="52" viewBox="0 0 46 46">
+           <circle cx="23" cy="23" r="20" fill="none" stroke="#1e3252" stroke-width="4"/>
+           <circle class="fg" cx="23" cy="23" r="20" fill="none" stroke="${MP.fmt.scoreColor(top.score)}" stroke-width="4" stroke-linecap="round" stroke-dashoffset="126"/>
+         </svg><div><div class="p-num">${pct}</div><div class="small mono">${top.ticker}</div></div>`,
+        `Today's highest Opportunity Score of ~${(scrJ || []).length} names`, "screener.html");
+      requestAnimationFrame(() => setTimeout(() => {
+        const fg = portals.querySelector(".ringviz .fg");
+        if (fg) fg.style.strokeDashoffset = (126 - 126 * pct / 100).toFixed(1);
+      }, 250));
+    }
+    // LAB — orbiting particle system
+    const orbitDots = [0, 1, 2, 3, 4].map(i =>
+      `<i style="--r:${12 + i * 5}px; animation-duration:${(3 + i * 1.3).toFixed(1)}s; opacity:${(1 - i * .14).toFixed(2)}"></i>`).join("");
+    portal("Portfolio Lab",
+      `<div class="orbits">${orbitDots}<span class="ctr">β</span></div>
+       <div class="p-sub" style="font-size:11px">Backtest · VaR · Monte Carlo · frontier</div>`,
+      "Build a portfolio, stress it like a risk desk", "lab.html");
+    // BRIEF — next central bank decision countdown
+    const nextCB = ((cbJ && cbJ.banks) || []).filter(b => b.next_decision).sort((a, b) => a.next_decision.localeCompare(b.next_decision))[0];
+    const dd = nextCB ? Math.max(0, Math.ceil((new Date(nextCB.next_decision) - Date.now()) / 864e5)) : null;
+    portal("Morning Brief",
+      nextCB ? `<span class="p-num">${dd}<span style="font-size:12px;color:var(--muted)">d</span></span>
+        <div class="p-sub" style="font-size:11px">until the ${nextCB.bank.replace("European Central Bank", "ECB").replace("Federal Reserve", "Fed")} decision</div>`
+        : `<span class="p-num">☕</span>`,
+      "Scoreboard, central banks and ranked headlines", "brief.html");
+  }
+
   // ---------- parallax ----------
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!reduce) {
@@ -120,6 +185,7 @@
       $("photofar").style.transform = `translate(${dx * -14}px,${dy * -6}px) scale(1.03)`;
       $("lights").style.transform = `translate(${dx * -18}px,${dy * -8}px)`;
       $("hud").style.transform = `translate(${dx * -26}px,${dy * -11}px)`;
+      $("portals").style.transform = `translate(${dx * 10}px,${dy * 7}px)`;
       $("moon").style.transform = `translate(${dx * 14}px,${dy * 10}px)`;
     });
     window.addEventListener("deviceorientation", e => {

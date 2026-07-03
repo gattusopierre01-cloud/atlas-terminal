@@ -327,7 +327,7 @@ svg.spark { display: block; }
 .l-front { pointer-events:auto; }
 .haze { position:absolute; inset:auto 0 0 0; height:46%; pointer-events:none;
   background:linear-gradient(180deg,transparent, rgba(10,19,34,.35) 55%, rgba(6,13,24,.75)); }
-.moon-earth { position:absolute; top:9%; right:12%; width:110px; height:110px; border-radius:50%; cursor:pointer;
+.moon-earth { position:absolute; top:8%; right:26%; width:110px; height:110px; border-radius:50%; cursor:pointer;
   z-index:4; transition:transform .4s; will-change:transform; }
 .moon-earth:hover { transform:scale(1.12); }
 .moon-tex { position:absolute; inset:0; border-radius:50%; background:url('https://unpkg.com/three-globe/example/img/earth-night.jpg');
@@ -438,3 +438,38 @@ svg.spark { display: block; }
 .heat-chips button.on { background:var(--blue); border-color:var(--blue); color:#fff }
 .heat-legend { font:10.5px var(--font-mono); color:var(--muted); margin-left:4px }
 @media (max-width:720px){ .heat-chips { left:12px; right:12px; bottom:70px; flex-wrap:wrap } }
+
+/* ============ Holo portals ============ */
+.portals { position:absolute; right:4.5%; top:24%; z-index:6; display:flex; flex-direction:column; gap:16px;
+  perspective:900px; will-change:transform; }
+.portal { position:relative; width:238px; padding:13px 16px 12px; border-radius:14px; cursor:pointer;
+  background:linear-gradient(160deg, rgba(16,30,54,.72), rgba(9,18,34,.55));
+  border:1px solid rgba(88,160,255,.28); backdrop-filter:blur(9px);
+  transform-style:preserve-3d; transition:transform .18s ease-out, border-color .2s, box-shadow .2s;
+  animation:portal-in .8s cubic-bezier(.2,.8,.2,1) both, portal-float 7s ease-in-out infinite; }
+.portal:nth-child(2){ animation-delay:.12s, 1.4s } .portal:nth-child(3){ animation-delay:.24s, 2.8s } .portal:nth-child(4){ animation-delay:.36s, 4.2s }
+@keyframes portal-in { from{ opacity:0; transform:translateX(46px) rotateY(-14deg) } to{ opacity:1; transform:none } }
+@keyframes portal-float { 0%,100%{ margin-top:0 } 50%{ margin-top:-6px } }
+.portal:hover { border-color:rgba(120,220,255,.85); box-shadow:0 0 26px rgba(80,180,255,.28), inset 0 0 20px rgba(80,180,255,.06); }
+.portal .p-k { font-family:var(--font-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+  color:#79c6ff; display:flex; justify-content:space-between; align-items:center }
+.portal .p-k .go { opacity:0; transition:opacity .2s; color:var(--ink) }
+.portal:hover .p-k .go { opacity:.9 }
+.portal .p-viz { height:56px; margin:8px 0 4px; display:flex; align-items:center; gap:12px }
+.portal .p-sub { font-size:11.5px; color:var(--muted); line-height:1.35 }
+.portal .p-num { font-family:var(--font-mono); font-size:20px; color:var(--ink) }
+/* self-drawing sparkline */
+.portal .drawline path.line { stroke-dasharray:420; stroke-dashoffset:420; animation:drawin 2.8s ease forwards }
+@keyframes drawin { to{ stroke-dashoffset:0 } }
+/* score ring */
+.ringviz { transform:rotate(-90deg) }
+.ringviz .fg { stroke-dasharray:126; transition:stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1) }
+/* orbiting dots (lab) */
+.orbits { position:relative; width:56px; height:56px; flex-shrink:0 }
+.orbits i { position:absolute; left:50%; top:50%; width:5px; height:5px; margin:-2.5px; border-radius:50%;
+  background:#7fd8ff; box-shadow:0 0 6px rgba(127,216,255,.9); animation:orb-path linear infinite }
+@keyframes orb-path { from{ transform:rotate(0) translateX(var(--r)) } to{ transform:rotate(360deg) translateX(var(--r)) } }
+.orbits .ctr { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-mono); font-size:13px; color:var(--ink) }
+@media (max-width:1120px){ .portals{ display:none } }
+@media (prefers-reduced-motion: reduce){ .portal{ animation:none } .portal .drawline path.line{ animation:none; stroke-dashoffset:0 } .orbits i{ animation:none } }
