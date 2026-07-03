@@ -292,29 +292,10 @@ svg.spark { display: block; }
 .stars { position:absolute; inset:0 0 30% 0; pointer-events:none; }
 .stars span { position:absolute; width:2px; height:2px; border-radius:50%; background:#cfe0ff; animation: tw 3s infinite; }
 @keyframes tw { 0%,100%{opacity:.85} 50%{opacity:.15} }
-.photo-far { position:absolute; inset:auto 0 0 0; height:84%; background-size:cover; background-position:center 58%;
-  opacity:0; filter:saturate(.9) brightness(.72); mask-image:linear-gradient(180deg,transparent,black 16%);
-  -webkit-mask-image:linear-gradient(180deg,transparent,black 16%); transition:opacity 1.2s; will-change:transform; }
-.photo-far.on { opacity:.92; }
-.photo-lights { position:absolute; inset:38% 0 6% 0; pointer-events:none; will-change:transform; }
-.photo-lights span { position:absolute; width:3px; height:3px; border-radius:50%;
-  background:#ffd98a; box-shadow:0 0 6px 1px rgba(255,205,120,.7); animation:citytw 4s infinite; }
-.photo-lights span.b { background:#9fd0ff; box-shadow:0 0 6px 1px rgba(140,190,255,.65); }
-@keyframes citytw { 0%,100%{opacity:.85} 50%{opacity:.05} }
-.hud { position:absolute; inset:0; pointer-events:none; will-change:transform; }
-.hud .pin { position:absolute; transform:translateX(-50%); pointer-events:auto; cursor:pointer;
-  display:flex; flex-direction:column; align-items:center; animation:hudfloat 6s ease-in-out infinite; }
-@keyframes hudfloat { 0%,100%{transform:translate(-50%,0)} 50%{transform:translate(-50%,-7px)} }
-.hud .chip { font-family:var(--font-mono); font-size:11.5px; white-space:nowrap;
-  background:color-mix(in srgb, var(--bg-deep) 72%, transparent); border:1px solid var(--line);
-  border-radius:16px; padding:5px 12px; color:var(--ink); backdrop-filter:blur(6px);
-  transition:border-color .2s, background .2s; }
-.hud .pin:hover .chip { border-color:var(--blue-bright); background:color-mix(in srgb, var(--panel) 92%, transparent); }
-.hud .stem { width:1px; height:52px; background:linear-gradient(180deg, var(--blue-bright), transparent); opacity:.55; }
-.hud .node { width:7px; height:7px; border-radius:50%; background:var(--blue-bright);
-  box-shadow:0 0 10px 2px rgba(79,141,253,.8); animation:pulse 2.6s infinite; }
-@media (prefers-reduced-motion: reduce){ .hud .pin, .photo-lights span { animation:none } }
-@media (max-width:820px){ .hud .chip{ font-size:10px; padding:4px 8px } .hud .stem{ height:34px } }
+.photo-far { position:absolute; inset:auto 0 12% 0; height:66%; background-size:cover; background-position:center 62%;
+  opacity:0; filter:saturate(.85) brightness(.68) blur(.4px); mask-image:linear-gradient(180deg,transparent,black 18%);
+  -webkit-mask-image:linear-gradient(180deg,transparent,black 18%); transition:opacity 1.2s; will-change:transform; }
+.photo-far.on { opacity:.85; }
 .layer { position:absolute; left:-3%; right:-3%; bottom:0; pointer-events:none; will-change:transform; }
 .layer svg { display:block; width:100%; }
 .l-front { pointer-events:auto; }
