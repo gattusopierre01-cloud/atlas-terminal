@@ -87,13 +87,21 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
   // ---------- voice ----------
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recog = null;
-  function listen(onText, onState) {
-    if (!SR) { onState("unsupported"); return; }
-    recog = new SR(); recog.lang = "en-US"; recog.interimResults = false;
+  function listen(onText, onState, onFail) {
+    if (!SR) { onState("unsupported"); if (onFail) onFail("Voice input needs Chrome or Edge — Safari doesn't support it reliably."); return; }
+    try { recog && recog.abort(); } catch {}
+    recog = new SR(); recog.lang = "en-US"; recog.interimResults = false; recog.maxAlternatives = 1;
     onState("listening");
-    recog.onresult = e => { onState("idle"); onText(e.results[0][0].transcript); };
-    recog.onerror = () => onState("idle");
-    recog.onend = () => onState("idle");
+    let got = false;
+    recog.onresult = e => { got = true; onState("idle"); onText(e.results[0][0].transcript); };
+    recog.onerror = e => {
+      onState("idle");
+      if (onFail) onFail(e.error === "not-allowed"
+        ? "Microphone blocked — click the mic icon in Chrome's address bar and allow it for this site."
+        : e.error === "no-speech" ? "Didn't catch that — try again closer to the mic."
+        : "Voice input error: " + e.error);
+    };
+    recog.onend = () => { onState("idle"); if (!got && onFail) setTimeout(() => {}, 0); };
     recog.start();
   }
   function pickVoice() {
@@ -106,16 +114,62 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
     for (const p of prefs) { const v = vs.find(x => x.name === p || x.name.startsWith(p)); if (v) return v; }
     return vs.find(x => /en-GB/i.test(x.lang)) || vs.find(x => /en/i.test(x.lang)) || null;
   }
-  function speak(text) {
-    if (!voiceOut() || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const clean = text.replace(/[*_#`]/g, "").replace(/ACTION:.*/s, "");
-    const u = new SpeechSynthesisUtterance(clean.slice(0, 600));
-    u.rate = 1.0; u.pitch = 0.84; u.volume = 1;
-    const v = pickVoice(); if (v) u.voice = v;
-    speechSynthesis.speak(u);
+  // --- robust speech: waits for voices, chunks sentences (Chrome kills long
+  //     utterances ~15s), keep-alive resume, safe re-entry after cancel ---
+  let speakSeq = 0, keepAlive = null;
+  function voicesReady() {
+    return new Promise(res => {
+      const vs = speechSynthesis.getVoices();
+      if (vs.length) return res(vs);
+      let done = false;
+      const finish = () => { if (!done) { done = true; res(speechSynthesis.getVoices()); } };
+      speechSynthesis.onvoiceschanged = finish;
+      setTimeout(finish, 1500);
+    });
   }
-  if (window.speechSynthesis) speechSynthesis.onvoiceschanged = () => {};
+  function chunks(text) {
+    const parts = [];
+    let cur = "";
+    for (const seg of text.split(/(?<=[.!?;:])\s+/)) {
+      if ((cur + " " + seg).length > 170 && cur) { parts.push(cur.trim()); cur = seg; }
+      else cur = cur ? cur + " " + seg : seg;
+    }
+    if (cur.trim()) parts.push(cur.trim());
+    return parts.slice(0, 8);
+  }
+  async function speak(text) {
+    if (!voiceOut() || !window.speechSynthesis) return;
+    const seq = ++speakSeq;
+    speechSynthesis.cancel();
+    if (keepAlive) { clearInterval(keepAlive); keepAlive = null; }
+    await voicesReady();
+    await new Promise(r => setTimeout(r, 80));      // let cancel() settle (Chrome)
+    if (seq !== speakSeq) return;                    // superseded by a newer reply
+    const clean = text
+      .replace(/ACTION:.*/s, "")
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/[*_#`~|>]/g, "")
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
+      .replace(/\s+/g, " ").trim().slice(0, 900);
+    if (!clean) return;
+    const v = pickVoice();
+    const parts = chunks(clean);
+    parts.forEach((p, i) => {
+      const u = new SpeechSynthesisUtterance(p);
+      u.rate = 1.0; u.pitch = 0.84; u.volume = 1;
+      if (v) u.voice = v;
+      if (i === parts.length - 1) u.onend = () => { if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } };
+      speechSynthesis.speak(u);
+    });
+    // Chrome stalls long queues unless nudged
+    keepAlive = setInterval(() => {
+      if (!speechSynthesis.speaking) { clearInterval(keepAlive); keepAlive = null; return; }
+      speechSynthesis.pause(); speechSynthesis.resume();
+    }, 9000);
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && window.speechSynthesis && speechSynthesis.paused) speechSynthesis.resume();
+  });
 
   // ---------- UI ----------
   function buildUI() {
@@ -147,6 +201,7 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn" id="ac-save" style="padding:7px 16px;font-size:13px">Save</button>
           <button class="btn ghost" id="ac-clearkey" style="padding:7px 16px;font-size:13px">Remove key</button>
+          <button class="btn ghost" id="ac-testvoice" style="padding:7px 16px;font-size:13px">▶ Test voice</button>
         </div>
       </div>
       <div class="ac-inrow">
@@ -184,6 +239,12 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
       $("ac-settings").hidden = true; sysMsg(getKey() ? "Key saved. Atlas is awake." : "No key entered.");
     };
     $("ac-clearkey").onclick = () => { try { localStorage.removeItem(LS_KEY); } catch {} $("ac-key").value = ""; sysMsg("Key removed. Atlas is dormant."); };
+    $("ac-testvoice").onclick = async () => {
+      const was = voiceOut();
+      try { localStorage.setItem(LS_VOICE, "1"); } catch {}
+      await speak("Atlas online. All systems nominal, and the markets are, as ever, undecided.");
+      if (!was) setTimeout(() => { try { localStorage.setItem(LS_VOICE, "0"); } catch {} }, 8000);
+    };
     $("ac-voiceout").onclick = () => {
       const nv = voiceOut() ? "0" : "1";
       try { localStorage.setItem(LS_VOICE, nv); } catch {}
@@ -191,7 +252,8 @@ CONTEXT (live data from the page the user is viewing): ${pageContext()}`;
       if (nv === "0") speechSynthesis && speechSynthesis.cancel();
     };
     $("ac-mic").onclick = () => listen(t => { $("ac-in").value = t; send(); },
-      st => $("ac-mic").classList.toggle("live", st === "listening"));
+      st => $("ac-mic").classList.toggle("live", st === "listening"),
+      msg => sysMsg(msg));
     $("ac-send").onclick = send;
     $("ac-in").addEventListener("keydown", e => { if (e.key === "Enter") send(); if (e.key === "Escape") dismiss(); });
   }
