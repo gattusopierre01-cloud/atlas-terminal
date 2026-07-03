@@ -78,12 +78,15 @@ const MP = (() => {
     nav.innerHTML = `
       <a class="wordmark" href="index.html">Atlas <span>Terminal</span></a>
       <div class="links">
-        <a href="index.html" ${active === "globe" ? 'class="active"' : ""}>Globe</a>
+        <a href="index.html" ${active === "home" ? 'class="active"' : ""}>Home</a>
+        <a href="globe.html" ${active === "globe" ? 'class="active"' : ""}>Globe</a>
+        <a href="brief.html" ${active === "brief" ? 'class="active"' : ""}>Brief</a>
         <a href="markets.html" ${active === "markets" ? 'class="active"' : ""}>Markets</a>
         <a href="lab.html" ${active === "lab" ? 'class="active"' : ""}>Lab</a>
         <a href="screener.html" ${active === "screener" ? 'class="active"' : ""}>Screener</a>
         <a href="methodology.html" ${active === "method" ? 'class="active"' : ""}>Methodology</a>
       </div>
+      <button class="kbtn" onclick="MP.openPalette()" aria-label="Search (Cmd+K)">⌘K</button>
       <span class="updated" id="mp-updated"></span>`;
     const tape = document.createElement("div");
     tape.className = "tape";
@@ -113,5 +116,65 @@ const MP = (() => {
     }
   }
 
-  return { fmt, spark, lineChart, getJSON, getJSONx, shell };
+  // ---------- global command palette (Cmd+K) ----------
+  let palReady = false, palUniv = null, palGeo = null;
+  const PAGES = [
+    ["Home — the terminal", "index.html"], ["Globe — country briefings", "globe.html"],
+    ["Morning Brief", "brief.html"], ["Markets dashboard", "markets.html"],
+    ["Portfolio Lab", "lab.html"], ["Screener — opportunity scores", "screener.html"],
+    ["Methodology", "methodology.html"],
+  ];
+  function ensurePalette() {
+    if (palReady) return; palReady = true;
+    const d = document.createElement("div");
+    d.id = "mp-pal"; d.innerHTML = `
+      <div class="pal-back"></div>
+      <div class="pal-box">
+        <input id="pal-in" placeholder="Search a ticker, company, or page…  (Esc to close)" autocomplete="off">
+        <div id="pal-res"></div>
+      </div>`;
+    document.body.appendChild(d);
+    d.querySelector(".pal-back").onclick = closePalette;
+    const inp = d.querySelector("#pal-in");
+    inp.addEventListener("input", () => palRender(inp.value));
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Escape") closePalette();
+      if (e.key === "Enter") { const f = d.querySelector("#pal-res a"); if (f) f.click(); }
+    });
+  }
+  async function openPalette() {
+    ensurePalette();
+    document.getElementById("mp-pal").classList.add("open");
+    const inp = document.getElementById("pal-in");
+    inp.value = ""; palRender(""); inp.focus();
+    if (!palUniv) palUniv = (await getJSON("data/screener.json")) || [];
+    if (!palGeo) {
+      const g = await getJSON("data/countries.geojson");
+      palGeo = ((g && g.features) || []).map(f => f.properties.ADMIN);
+    }
+  }
+  function closePalette() { const p = document.getElementById("mp-pal"); if (p) p.classList.remove("open"); }
+  function palRender(q) {
+    q = q.trim().toLowerCase();
+    const res = document.getElementById("pal-res");
+    const pages = PAGES.filter(p => !q || p[0].toLowerCase().includes(q))
+      .map(p => `<a href="${p[1]}"><span class="pal-k">page</span>${p[0]}</a>`);
+    let ticks = [];
+    if (q && palUniv) {
+      ticks = palUniv.filter(r => r.ticker.toLowerCase().includes(q) || (r.longName || r.name || "").toLowerCase().includes(q))
+        .slice(0, 7)
+        .map(r => `<a href="company.html?t=${encodeURIComponent(r.ticker)}"><span class="pal-k">stock</span><b>${r.ticker}</b>&nbsp; ${r.longName || r.name || ""} ${r.score != null ? `<span class="pal-s" style="background:${fmt.scoreColor(r.score)}">${Math.round(r.score)}</span>` : ""}</a>`);
+    }
+    let ctys = [];
+    if (q && palGeo) {
+      ctys = palGeo.filter(n => n.toLowerCase().includes(q)).slice(0, 4)
+        .map(n => `<a href="globe.html?focus=${encodeURIComponent(n)}"><span class="pal-k">country</span>${n}</a>`);
+    }
+    res.innerHTML = [...ticks, ...ctys, ...pages.slice(0, q ? 3 : 7)].join("") || `<div class="pal-none">No matches.</div>`;
+  }
+  document.addEventListener("keydown", e => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(); }
+  });
+
+  return { fmt, spark, lineChart, getJSON, getJSONx, shell, openPalette };
 })();

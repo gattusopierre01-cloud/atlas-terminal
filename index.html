@@ -3,30 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Atlas Terminal — the world economy, live</title>
-<meta name="description" content="Interactive macroeconomic globe: click any country for growth, inflation, policy rates and live economic news.">
+<title>Atlas Terminal — the market, alive</title>
+<meta name="description" content="An open macro & equity terminal: interactive globe, live screener, portfolio lab and a morning brief — built on public data.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<div class="hero-globe">
-  <div id="globe"></div>
-  <div class="hero-copy">
-    <div class="eyebrow">Global macro terminal</div>
-    <h1 class="display">The world economy,<br><em>one sphere.</em></h1>
-    <p class="lede">Click any country for growth, inflation, unemployment, its central bank's policy rate and the latest economic headlines — pulled live from World Bank and GDELT data.</p>
-  </div>
-  <div class="hero-hint"><span class="dot"></span>Drag to rotate · click a country to open its briefing</div>
+<div class="scene" id="scene">
+  <div class="sky" id="sky"></div>
+  <div class="stars" id="stars"></div>
+  <div class="moon-earth" id="moon" title="Open the globe"><div class="moon-tex"></div><div class="moon-glow"></div></div>
+  <div class="photo-far" id="photofar"></div>
+  <div class="layer l-far" id="lfar"></div>
+  <div class="layer l-mid" id="lmid"></div>
+  <div class="layer l-front" id="lfront"></div>
+  <div class="haze"></div>
 
-  <aside class="country-panel" id="panel" aria-live="polite">
-    <button class="close" id="panel-close" aria-label="Close panel">✕</button>
-    <div id="panel-body"></div>
-  </aside>
+  <div class="scene-copy">
+    <div class="eyebrow">Atlas Terminal</div>
+    <h1 class="display">The market, <em>alive.</em></h1>
+    <p class="lede" style="font-size:15px">Hover the towers — each one is a live index. The earth above is clickable. Press <span class="kbd">⌘K</span> to search anything.</p>
+    <div class="scene-cta">
+      <a class="btn" href="brief.html">Morning brief →</a>
+      <a class="btn ghost" href="lab.html">Portfolio Lab</a>
+    </div>
+  </div>
+
+  <div class="mkt-clock" id="mktclock"></div>
+  <div class="tower-tip" id="towertip" hidden></div>
+  <div class="led-band" id="ledband"><div class="led-inner" id="ledinner"></div></div>
 </div>
 
-<script src="https://unpkg.com/globe.gl@2.32.2/dist/globe.gl.min.js"></script>
+<main class="wrap" id="belowfold">
+  <div class="grid g3">
+    <div class="card link fold-card" onclick="location.href='markets.html'">
+      <div class="k">Today's movers</div><div id="fold-movers" class="small" style="margin-top:8px">Loading…</div>
+    </div>
+    <div class="card link fold-card" onclick="location.href='screener.html'">
+      <div class="k">Top opportunity scores</div><div id="fold-scores" class="small" style="margin-top:8px">Loading…</div>
+    </div>
+    <div class="card link fold-card" onclick="location.href='lab.html'">
+      <div class="k">Portfolio Lab</div><div class="small" style="margin-top:8px">Backtests, CAPM, VaR/CVaR, efficient frontier and 10,000-path Monte Carlo — on any mix of ~650 stocks, in your browser.</div>
+      <div style="margin-top:10px"><span class="pill">6 model portfolios</span><span class="pill">Max-Sharpe optimizer</span></div>
+    </div>
+  </div>
+</main>
+
 <script src="assets/app.js"></script>
-<script src="assets/globe.js"></script>
+<script src="assets/home.js"></script>
 </body>
 </html>

@@ -201,6 +201,13 @@ select:hover, input:hover { border-color: var(--blue); }
 .reason .ic { color: var(--up); font-family: var(--font-mono); }
 .reason.warn .ic { color: var(--amber); }
 
+.btn { background:var(--blue); color:#fff; border:none; border-radius:8px; padding:10px 22px;
+  font-family:var(--font-body); font-weight:600; font-size:14px; cursor:pointer }
+.btn:hover{ background:var(--blue-bright) } .btn.ghost{ background:transparent;border:1px solid var(--line);color:var(--muted) }
+.btn.ghost:hover{ color:var(--ink);border-color:var(--blue) }
+a.btn { text-decoration:none; display:inline-block }
+a.btn:hover { text-decoration:none }
+
 /* ---------- misc ---------- */
 .banner {
   background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--amber);
@@ -219,3 +226,136 @@ svg.spark { display: block; }
   .wrap { padding: 24px 16px 70px; }
   .hero-copy { max-width: 88%; }
 }
+
+/* ---------- command palette ---------- */
+.kbtn { margin-left:14px; background:var(--panel); border:1px solid var(--line); color:var(--muted);
+  border-radius:7px; font-family:var(--font-mono); font-size:11.5px; padding:5px 10px; cursor:pointer }
+.kbtn:hover { color:var(--ink); border-color:var(--blue) }
+#mp-pal { position:fixed; inset:0; z-index:200; display:none }
+#mp-pal.open { display:block }
+#mp-pal .pal-back { position:absolute; inset:0; background:rgba(4,9,17,.72); backdrop-filter:blur(3px) }
+#mp-pal .pal-box { position:relative; max-width:560px; margin:12vh auto 0; background:var(--panel);
+  border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.6) }
+#pal-in { width:100%; background:var(--panel-2); border:none; border-bottom:1px solid var(--line);
+  color:var(--ink); padding:16px 18px; font-size:15px; font-family:var(--font-body); outline:none }
+#pal-res a { display:flex; align-items:center; gap:10px; padding:11px 16px; color:var(--ink);
+  font-size:13.5px; border-bottom:1px solid color-mix(in srgb, var(--line) 45%, transparent) }
+#pal-res a:hover { background:var(--panel-2); text-decoration:none }
+.pal-k { font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.1em;
+  color:var(--faint); width:38px }
+.pal-s { font-family:var(--font-mono); font-size:11px; font-weight:600; color:#06101e;
+  border-radius:10px; padding:1px 8px; margin-left:auto }
+.pal-none { padding:18px; color:var(--faint); font-size:13px }
+
+/* ---------- home scene ---------- */
+.scene { position:relative; height:calc(100vh - 98px); min-height:600px; overflow:hidden; background:#050a14 }
+.scene .photo { position:absolute; inset:-4%; background-size:cover; background-position:center 30%;
+  filter:brightness(.5) saturate(.85); transition:transform .15s ease-out; will-change:transform }
+.scene .scrim { position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(6,13,24,.82) 0%, rgba(10,19,34,.35) 45%, rgba(5,10,20,.96) 96%) }
+.scene .stars { position:absolute; inset:0 }
+.sky-layer { position:absolute; left:0; right:0; bottom:0; transition:transform .15s ease-out; will-change:transform }
+.tower { cursor:pointer }
+.tower:hover .glass { opacity:.95 }
+.tower .win { animation: winflick var(--fd, 7s) infinite }
+@keyframes winflick { 0%,92%,100%{opacity:var(--wo,.8)} 96%{opacity:.15} }
+.beacon { animation: beaconpulse 2.4s ease-in-out infinite }
+@keyframes beaconpulse { 0%,100%{opacity:.25} 50%{opacity:1} }
+.scene-copy { position:absolute; top:9%; left:6%; z-index:8; max-width:600px; pointer-events:none }
+.scene-copy .lede, .scene-copy .eyebrow, .scene-copy h1 { pointer-events:auto }
+.scene-status { position:absolute; top:11%; right:6%; z-index:8; text-align:right;
+  font-family:var(--font-mono); font-size:12px; color:var(--muted) }
+.scene-status .st { font-size:14px; color:var(--ink) } .scene-status .open-dot { color:var(--up) }
+.moon-wrap { position:absolute; top:13%; right:22%; z-index:6; width:170px; height:170px;
+  border-radius:50%; overflow:hidden; cursor:pointer; box-shadow:0 0 60px rgba(37,99,235,.35), inset 0 0 30px rgba(0,0,0,.6);
+  transition:transform .3s, box-shadow .3s }
+.moon-wrap:hover { transform:scale(1.06); box-shadow:0 0 90px rgba(79,141,253,.5), inset 0 0 30px rgba(0,0,0,.6) }
+.moon-hint { position:absolute; top:calc(13% + 178px); right:22%; z-index:6; font-family:var(--font-mono);
+  font-size:10.5px; color:var(--faint); width:170px; text-align:center }
+.tip { position:absolute; z-index:20; background:var(--panel); border:1px solid var(--line); border-radius:8px;
+  padding:8px 12px; font-family:var(--font-mono); font-size:12px; pointer-events:none; display:none; white-space:nowrap }
+.tip b { display:block; font-size:12.5px }
+.fold { position:absolute; bottom:18px; left:50%; transform:translateX(-50%); z-index:8;
+  color:var(--faint); font-family:var(--font-mono); font-size:11px; animation:pulse 2.5s infinite }
+.reveal { opacity:0; transform:translateY(26px); transition:opacity .7s, transform .7s }
+.reveal.in { opacity:1; transform:none }
+@media (prefers-reduced-motion: reduce){ .reveal{opacity:1; transform:none} .tower .win, .beacon{animation:none} }
+@media (max-width:820px){ .moon-wrap{ width:110px; height:110px; right:8%; top:10% } .moon-hint{ display:none }
+  .scene-status{ top:auto; bottom:14%; right:6% } }
+
+/* ============ Landing scene ============ */
+.scene { position:relative; height:calc(100vh - 98px); min-height:600px; overflow:hidden; background:var(--bg-deep); }
+.sky { position:absolute; inset:0; transition: background 2s; }
+.sky.night { background: linear-gradient(180deg,#050b16 0%,#0a1626 45%,#12233c 78%,#1d3557 100%); }
+.sky.dawn { background: linear-gradient(180deg,#0a1220 0%,#182a47 40%,#4a3a5c 75%,#b46a5a 100%); }
+.sky.open { background: linear-gradient(180deg,#081120 0%,#12233e 45%,#1e3a66 80%,#2b4d84 100%); }
+.stars { position:absolute; inset:0 0 30% 0; pointer-events:none; }
+.stars span { position:absolute; width:2px; height:2px; border-radius:50%; background:#cfe0ff; animation: tw 3s infinite; }
+@keyframes tw { 0%,100%{opacity:.85} 50%{opacity:.15} }
+.photo-far { position:absolute; inset:auto 0 18% 0; height:52%; background-size:cover; background-position:center 70%;
+  opacity:0; filter:saturate(.7) brightness(.5) blur(1px); mask-image:linear-gradient(180deg,transparent,black 22%);
+  -webkit-mask-image:linear-gradient(180deg,transparent,black 22%); transition:opacity 1.2s; will-change:transform; }
+.photo-far.on { opacity:.55; }
+.layer { position:absolute; left:-3%; right:-3%; bottom:0; pointer-events:none; will-change:transform; }
+.layer svg { display:block; width:100%; }
+.l-front { pointer-events:auto; }
+.haze { position:absolute; inset:auto 0 0 0; height:46%; pointer-events:none;
+  background:linear-gradient(180deg,transparent, rgba(10,19,34,.35) 55%, rgba(6,13,24,.75)); }
+.moon-earth { position:absolute; top:9%; right:12%; width:110px; height:110px; border-radius:50%; cursor:pointer;
+  z-index:4; transition:transform .4s; will-change:transform; }
+.moon-earth:hover { transform:scale(1.12); }
+.moon-tex { position:absolute; inset:0; border-radius:50%; background:url('https://unpkg.com/three-globe/example/img/earth-night.jpg');
+  background-size:230px 115px; background-repeat:repeat-x; animation: spin 38s linear infinite;
+  box-shadow: inset -18px -10px 34px rgba(0,0,0,.85), inset 6px 6px 18px rgba(120,170,255,.18); }
+@keyframes spin { from{background-position-x:0} to{background-position-x:-230px} }
+.moon-glow { position:absolute; inset:-16px; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle, rgba(79,141,253,.24), transparent 68%); }
+.scene-copy { position:absolute; top:12%; left:6%; z-index:5; max-width:480px; }
+.scene-cta { display:flex; gap:10px; margin-top:18px; }
+.kbd { font-family:var(--font-mono); font-size:12px; border:1px solid var(--line); border-bottom-width:2px;
+  border-radius:5px; padding:1px 7px; background:var(--panel); }
+.mkt-clock { position:absolute; top:20px; right:22px; z-index:5; font-family:var(--font-mono); font-size:12px;
+  color:var(--muted); background:color-mix(in srgb, var(--bg-deep) 75%, transparent); border:1px solid var(--line);
+  border-radius:20px; padding:6px 14px; backdrop-filter:blur(6px); }
+.mkt-clock .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; vertical-align:0; }
+.mkt-clock .dot.on { background:var(--up); box-shadow:0 0 8px var(--up); animation:pulse 2s infinite; }
+.mkt-clock .dot.off { background:var(--faint); }
+.mkt-clock .dot.pre { background:var(--amber); animation:pulse 2.4s infinite; }
+.tower-tip { position:absolute; z-index:8; background:var(--panel); border:1px solid var(--blue); border-radius:8px;
+  padding:8px 12px; font-family:var(--font-mono); font-size:12.5px; pointer-events:none; transform:translate(-50%,-115%); }
+.tower-tip b { display:block; font-family:var(--font-body); font-size:13px; }
+.led-band { position:absolute; bottom:0; left:0; right:0; z-index:6; background:#04070d;
+  border-top:2px solid #1a2c49; overflow:hidden; padding:7px 0; }
+.led-inner { display:inline-flex; gap:44px; white-space:nowrap; animation:tape-scroll 55s linear infinite;
+  font-family:var(--font-mono); font-size:13px; letter-spacing:.06em; color:#e8b44c;
+  text-shadow:0 0 6px rgba(232,180,76,.6); }
+.led-inner .u { color:#3ee98a; text-shadow:0 0 6px rgba(62,233,138,.65); }
+.led-inner .d { color:#ff5a5f; text-shadow:0 0 6px rgba(255,90,95,.65); }
+.led-band:hover .led-inner { animation-play-state:paused; }
+.fold-card { min-height:150px; }
+.tower { cursor:pointer; }
+.tower rect.body { transition: filter .2s; }
+.tower:hover rect.body { filter:brightness(1.5); }
+@media (max-width:720px){ .moon-earth{ width:74px;height:74px; right:7%; top:7% } .scene-copy{ max-width:86% } }
+
+/* ============ Command palette ============ */
+.cmdk { position:fixed; inset:0; z-index:200; background:rgba(4,8,15,.72); backdrop-filter:blur(4px);
+  display:flex; align-items:flex-start; justify-content:center; padding-top:14vh; }
+.cmdk[hidden]{ display:none }
+.cmdk .box { width:min(620px,92vw); background:var(--panel); border:1px solid var(--line); border-radius:14px;
+  overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.6); }
+.cmdk input { width:100%; background:transparent; border:none; outline:none; color:var(--ink);
+  font:15px var(--font-body); padding:16px 18px; border-bottom:1px solid var(--line); }
+.cmdk .res { max-height:44vh; overflow-y:auto; }
+.cmdk .item { display:flex; justify-content:space-between; gap:12px; padding:11px 18px; cursor:pointer; font-size:13.5px; }
+.cmdk .item .cat { font-family:var(--font-mono); font-size:10.5px; color:var(--faint); text-transform:uppercase; letter-spacing:.1em; }
+.cmdk .item.sel, .cmdk .item:hover { background:var(--panel-2); }
+.cmdk .hint { padding:9px 18px; font-family:var(--font-mono); font-size:10.5px; color:var(--faint);
+  border-top:1px solid var(--line); }
+
+/* ============ Morning Brief ============ */
+.brief-date { font-family:var(--font-mono); font-size:12px; color:var(--blue-bright); letter-spacing:.14em; text-transform:uppercase; }
+.lane { margin-top:8px; }
+.lane .news-item a { font-size:14px; }
+.scoreboard .card { padding:13px 16px; }
+.brief-config { display:flex; gap:8px; align-items:center; }

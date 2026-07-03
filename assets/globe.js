@@ -48,6 +48,16 @@
   size(); window.addEventListener("resize", size);
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) globe.controls().autoRotate = false;
 
+  // deep link: globe.html?focus=France opens that country's briefing
+  const focusName = new URLSearchParams(location.search).get("focus");
+  if (focusName) {
+    const f = countries.features.find(x => x.properties.ADMIN.toLowerCase() === focusName.toLowerCase());
+    if (f) setTimeout(() => {
+      const c = f.properties;
+      openCountry(c);
+    }, 600);
+  }
+
   const panel = document.getElementById("panel");
   const body = document.getElementById("panel-body");
   document.getElementById("panel-close").onclick = () => {
